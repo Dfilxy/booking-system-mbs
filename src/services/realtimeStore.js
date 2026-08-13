@@ -175,17 +175,13 @@ const generateDefaultBadmintonSlots = () => {
   [today, tomorrow].forEach((dateStr) => {
     DEFAULT_COURTS.forEach((court) => {
       TIMES.forEach((time) => {
-        const isInitialBooked = 
-          (time === '19:00' && court.id === 'court-a') ||
-          (time === '20:00' && court.id === 'court-a');
-
         slots.push({
           id: `slot-${dateStr}-${court.id}-${time.replace(':', '')}`,
           court_id: court.id,
           court_name: court.name,
           slot_date: dateStr,
           start_time: time,
-          status: isInitialBooked ? 'booked' : 'available'
+          status: 'available'
         });
       });
     });
