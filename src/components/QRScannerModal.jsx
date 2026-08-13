@@ -280,10 +280,10 @@ export default function QRScannerModal({ onClose, onSuccessCheckIn }) {
               href={scanResult.customerWaUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-600 hover:to-teal-500 text-white font-bold text-xs shadow-lg transition flex items-center justify-center space-x-2"
+              className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-600 hover:to-teal-500 text-white font-bold text-xs shadow-lg transition flex items-center justify-center gap-2 text-center leading-snug"
             >
-              <Send className="w-4 h-4" />
-              <span>📱 Kirim Bukti Verifikasi ke WA Pemain</span>
+              <Send className="w-4 h-4 shrink-0 text-white" />
+              <span>Kirim Bukti Verifikasi ke WA Pemain</span>
             </a>
 
             <button

@@ -264,6 +264,39 @@ const syncSettingsToFirestore = async (settings) => {
   }
 };
 
+export const cleanupOrphanSlots = () => {
+  try {
+    const currentSlots = JSON.parse(localStorage.getItem(STORAGE_KEY_SLOTS) || '[]');
+    const currentBookings = JSON.parse(localStorage.getItem(STORAGE_KEY_BOOKINGS) || '[]');
+
+    const validBookedSlotIds = new Set();
+    currentBookings.forEach(b => {
+      if (b && (b.status === 'confirmed' || b.status === 'playing')) {
+        const sIds = b.slot_ids || (b.slot_id ? [b.slot_id] : []);
+        sIds.forEach(id => validBookedSlotIds.add(id));
+      }
+    });
+
+    let hasChanges = false;
+    const modifiedSlots = [];
+    currentSlots.forEach(s => {
+      if (s.status === 'booked' && !validBookedSlotIds.has(s.id)) {
+        s.status = 'available';
+        modifiedSlots.push(s);
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(currentSlots));
+      syncSlotsBatchToFirestore(modifiedSlots);
+      notifyAllSubscribers({ type: 'ORPHAN_SLOTS_CLEANED' });
+    }
+  } catch (e) {
+    console.error('Error cleaning up orphan slots:', e);
+  }
+};
+
 let isFirestoreListenerActive = false;
 
 export const initRealtimeDatabase = () => {
@@ -292,6 +325,9 @@ export const initRealtimeDatabase = () => {
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(DEFAULT_USERS));
     if (DEFAULT_USERS[0]) syncUserToFirestore(DEFAULT_USERS[0]);
   }
+
+  // Auto clean dummy booked slots
+  cleanupOrphanSlots();
 
   // FIRESTORE REALTIME LISTENERS (MULTIDEVICE REALTIME SYNC)
   if (!isFirestoreListenerActive) {
@@ -326,6 +362,7 @@ export const initRealtimeDatabase = () => {
       remoteBookings.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
       localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(remoteBookings));
 
+      cleanupOrphanSlots();
       notifyAllSubscribers({ type: 'FIREBASE_BOOKING_SYNC', timestamp: Date.now() });
       broadcastChannel.postMessage({
         type: 'REALTIME_BOOKING_SYNC_REMOTE',
