@@ -826,29 +826,35 @@ export default function PublicBooking() {
                 href={adminWaUrl || `https://wa.me/${currentAdminPhone.replace(/[^0-9]/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-500 hover:to-teal-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center space-x-2 text-center"
+                className="w-full py-3 px-3 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-500 hover:to-teal-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center text-center"
               >
-                <Phone className="w-4 h-4 text-slate-950 shrink-0" />
-                <span className="whitespace-nowrap">Kirim Notifikasi WA Admin</span>
+                <div className="flex items-center justify-center gap-1.5 mx-auto">
+                  <Phone className="w-4 h-4 text-slate-950 shrink-0" />
+                  <span className="whitespace-nowrap">Kirim Notifikasi WA Admin</span>
+                </div>
               </a>
 
               <button
                 type="button"
                 onClick={() => downloadETicketPNG(confirmedBooking)}
-                className="w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-lg shadow-purple-600/20 border border-purple-400/30 transition"
+                className="w-full py-3 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs shadow-lg shadow-purple-600/20 border border-purple-400/30 transition flex items-center justify-center text-center"
               >
-                <Download className="w-4 h-4" />
-                <span>Unduh E-Tiket (PNG)</span>
+                <div className="flex items-center justify-center gap-1.5 mx-auto">
+                  <Download className="w-4 h-4 text-white shrink-0" />
+                  <span className="whitespace-nowrap">Unduh E-Tiket (PNG)</span>
+                </div>
               </button>
 
               <a
                 href={generateGoogleCalendarUrl(confirmedBooking)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center justify-center space-x-2 border border-slate-700 transition"
+                className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center border border-slate-700 transition text-center"
               >
-                <CalendarPlus className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Simpan ke Google Calendar</span>
+                <div className="flex items-center justify-center gap-1.5 mx-auto">
+                  <CalendarPlus className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="whitespace-nowrap">Simpan ke Google Calendar</span>
+                </div>
               </a>
 
               <button
