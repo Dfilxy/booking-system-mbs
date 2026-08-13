@@ -1,0 +1,204 @@
+import React, { useState, useEffect } from 'react';
+import RoleSelectorLanding from './components/RoleSelectorLanding';
+import Navbar from './components/Navbar';
+import PublicBooking from './components/PublicBooking';
+import BookingManage from './components/BookingManage';
+import AdminDashboard from './components/AdminDashboard';
+import {
+  initRealtimeDatabase,
+  getCurrentSession,
+  logoutActiveUser,
+  updateLastActivity,
+  isSessionExpired
+} from './services/realtimeStore';
+
+export default function App() {
+  // Session State - Isolasi Per-Tab (Bertahan saat Refresh!)
+  const [currentRole, setCurrentRole] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    const tabSessionRole = sessionStorage.getItem('rts_tab_role');
+    const isAdminAuth = sessionStorage.getItem('rts_admin_authenticated') === 'true' || localStorage.getItem('rts_admin_authenticated_v14') === 'true';
+
+    // 1. Jika URL hash adalah 'admin' ATAU tabSessionRole === 'admin', ini TAB ADMIN!
+    if (hash === 'admin' || tabSessionRole === 'admin' || (isAdminAuth && hash !== 'booking' && hash !== 'manage')) {
+      sessionStorage.setItem('rts_tab_role', 'admin');
+      sessionStorage.setItem('rts_admin_authenticated', 'true');
+      return 'admin';
+    }
+
+    // 2. Jika URL hash adalah 'booking' ATAU 'manage' ATAU tabSessionRole === 'user', ini TAB USER!
+    if (['booking', 'manage'].includes(hash) || tabSessionRole === 'user') {
+      sessionStorage.setItem('rts_tab_role', 'user');
+      return 'user';
+    }
+
+    const session = getCurrentSession();
+    return session ? session.role : null;
+  });
+
+  // Tab Customer State (Persist saat Refresh!)
+  const [customerTab, setCustomerTabState] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (['booking', 'manage'].includes(hash)) {
+      return hash;
+    }
+    return localStorage.getItem('rts_customer_active_tab') || 'booking';
+  });
+
+  const setCustomerTab = (tab) => {
+    setCustomerTabState(tab);
+    localStorage.setItem('rts_customer_active_tab', tab);
+    if (currentRole === 'user') {
+      window.location.hash = tab;
+    }
+  };
+
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
+
+  useEffect(() => {
+    initRealtimeDatabase();
+
+    if (currentRole) {
+      sessionStorage.setItem('rts_tab_role', currentRole);
+      if (currentRole === 'admin') {
+        sessionStorage.setItem('rts_admin_authenticated', 'true');
+        if (window.location.hash !== '#admin') {
+          window.location.hash = 'admin';
+        }
+      } else if (currentRole === 'user') {
+        const hash = window.location.hash.replace('#', '');
+        if (['booking', 'manage'].includes(hash)) {
+          setCustomerTabState(hash);
+        } else {
+          window.location.hash = customerTab || 'booking';
+        }
+      }
+    }
+
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (currentRole === 'user' && ['booking', 'manage'].includes(hash)) {
+        setCustomerTabState(hash);
+        localStorage.setItem('rts_customer_active_tab', hash);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+
+    // Event listener aktivitas pengguna untuk memperbarui last_activity_timestamp
+    const handleUserActivity = () => {
+      if (currentRole) {
+        updateLastActivity();
+      }
+    };
+
+    window.addEventListener('mousemove', handleUserActivity);
+    window.addEventListener('keydown', handleUserActivity);
+    window.addEventListener('click', handleUserActivity);
+    window.addEventListener('scroll', handleUserActivity);
+    window.addEventListener('touchstart', handleUserActivity);
+
+    // Timer pengecekan periodik inaktivitas (setiap 15 detik)
+    const interval = setInterval(() => {
+      if (currentRole && isSessionExpired()) {
+        handleLogout();
+        setSessionExpiredNotice(true);
+      }
+    }, 15000);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('click', handleUserActivity);
+      window.removeEventListener('scroll', handleUserActivity);
+      window.removeEventListener('touchstart', handleUserActivity);
+      clearInterval(interval);
+    };
+  }, [currentRole, customerTab]);
+
+  const handleAuthenticated = ({ role }) => {
+    updateLastActivity();
+    setCurrentRole(role);
+    sessionStorage.setItem('rts_tab_role', role);
+    if (role === 'admin') {
+      sessionStorage.setItem('rts_admin_authenticated', 'true');
+      localStorage.setItem('rts_admin_authenticated_v14', 'true');
+      window.location.hash = 'admin';
+    } else {
+      window.location.hash = customerTab || 'booking';
+    }
+    setSessionExpiredNotice(false);
+  };
+
+  const handleLogout = () => {
+    logoutActiveUser();
+    sessionStorage.removeItem('rts_tab_role');
+    sessionStorage.removeItem('rts_admin_authenticated');
+    localStorage.removeItem('rts_current_role');
+
+    // Reset URL Hash ke halaman login secara bersih
+    window.location.hash = 'login';
+
+    setCurrentRole(null);
+    setSessionExpiredNotice(false);
+  };
+
+  // 1. JIKA BELUM LOGIN / SESI HAK AKSES KOSONG -> TAMPILKAN FORM DAFTAR / LOGIN
+  if (!currentRole) {
+    if (window.location.hash !== '#login') {
+      window.location.hash = 'login';
+    }
+    return (
+      <div className="relative">
+        {sessionExpiredNotice && (
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-rose-600 text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-2xl shadow-2xl border border-rose-400 flex items-center space-x-2 animate-bounce">
+            <span>⏰ Sesi Anda telah berakhir karena tidak ada aktivitas selama 1 jam. Silakan login kembali.</span>
+          </div>
+        )}
+        <RoleSelectorLanding onAuthenticated={handleAuthenticated} />
+      </div>
+    );
+  }
+
+  const isRouteAdmin = currentRole === 'admin';
+
+  return (
+    <div className="min-h-screen bg-[#060813] text-slate-100 font-sans selection:bg-orange-500 selection:text-white relative overflow-x-hidden max-w-full w-full flex flex-col justify-between">
+      
+      {/* Background Glow Effects - Cyber Orange & Emerald */}
+      <div className="fixed top-0 left-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-orange-500/20 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="fixed bottom-0 right-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+
+      <div>
+        {/* Navigation Bar */}
+        <Navbar
+          isRouteAdmin={isRouteAdmin}
+          activeTab={customerTab}
+          setActiveTab={setCustomerTab}
+          onResetRole={handleLogout}
+        />
+
+        {/* Dedicated Main Content View */}
+        <main className="relative z-10 pb-16 w-full max-w-full overflow-x-hidden">
+          {isRouteAdmin ? (
+            <AdminDashboard />
+          ) : (
+            <>
+              {customerTab === 'booking' && <PublicBooking />}
+              {customerTab === 'manage' && <BookingManage />}
+            </>
+          )}
+        </main>
+      </div>
+
+      {/* Clean Footer */}
+      <footer className="border-t border-slate-800/80 bg-slate-900/60 py-6 text-center text-xs text-slate-400 w-full overflow-x-hidden mt-auto">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p>© 2026 GOR MBS (Mandiri Bengle Sejahtera). Realtime Booking & Session Persistence System.</p>
+        </div>
+      </footer>
+
+    </div>
+  );
+}
