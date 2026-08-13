@@ -1,7 +1,18 @@
 /**
- * REALTIME DATA STORE & INTER-TAB SYNC ENGINE
+ * REALTIME DATA STORE & INTER-TAB & MULTI-DEVICE CLOUD SYNC ENGINE (FIREBASE FIRESTORE)
  * Sewa Lapangan Bulu Tangkis (Lapangan A, B, C)
  */
+
+import { db } from './firebase';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  getDocs, 
+  onSnapshot, 
+  deleteDoc, 
+  writeBatch 
+} from 'firebase/firestore';
 
 const STORAGE_KEY_SLOTS = 'rts_schedule_slots_badminton_v14';
 const STORAGE_KEY_BOOKINGS = 'rts_bookings_badminton_v14';
@@ -57,7 +68,6 @@ const DEFAULT_SETTINGS = {
   operatingHours: '07:00 - 23:00 WIB'
 };
 
-// Akun default dengan hashed password
 const DEFAULT_USERS = [
   { id: 'usr-1', name: 'Ahmad Ludfi', phone: '0895387571635', password: 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', role: 'user', created_at: new Date().toISOString() }
 ];
@@ -99,6 +109,7 @@ export const ensureSlotsForDate = (dateStr) => {
   if (!dateStr) return;
   const currentSlots = JSON.parse(localStorage.getItem(STORAGE_KEY_SLOTS) || '[]');
   let hasNew = false;
+  const newSlots = [];
 
   DEFAULT_COURTS.forEach((court) => {
     TIMES.forEach((time) => {
@@ -106,14 +117,16 @@ export const ensureSlotsForDate = (dateStr) => {
         s => s.slot_date === dateStr && s.court_id === court.id && s.start_time === time
       );
       if (!exists) {
-        currentSlots.push({
+        const slotItem = {
           id: `slot-${dateStr}-${court.id}-${time.replace(':', '')}`,
           court_id: court.id,
           court_name: court.name,
           slot_date: dateStr,
           start_time: time,
           status: 'available'
-        });
+        };
+        currentSlots.push(slotItem);
+        newSlots.push(slotItem);
         hasNew = true;
       }
     });
@@ -122,6 +135,7 @@ export const ensureSlotsForDate = (dateStr) => {
   if (hasNew) {
     currentSlots.sort((a, b) => a.start_time.localeCompare(b.start_time));
     localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(currentSlots));
+    syncSlotsBatchToFirestore(newSlots);
   }
 };
 
@@ -155,6 +169,82 @@ const generateDefaultBadmintonSlots = () => {
   return slots;
 };
 
+// FIREBASE FIRESTORE SYNC HELPERS
+const syncBookingToFirestore = async (booking) => {
+  try {
+    if (booking && booking.id) {
+      await setDoc(doc(db, 'bookings', booking.id), booking);
+    }
+  } catch (err) {
+    console.error('Error syncing booking to Firestore:', err);
+  }
+};
+
+const syncSlotToFirestore = async (slot) => {
+  try {
+    if (slot && slot.id) {
+      await setDoc(doc(db, 'slots', slot.id), slot);
+    }
+  } catch (err) {
+    console.error('Error syncing slot to Firestore:', err);
+  }
+};
+
+const syncSlotsBatchToFirestore = async (slotsArray) => {
+  try {
+    if (!slotsArray || slotsArray.length === 0) return;
+    const batch = writeBatch(db);
+    slotsArray.forEach(slot => {
+      if (slot && slot.id) {
+        batch.set(doc(db, 'slots', slot.id), slot, { merge: true });
+      }
+    });
+    await batch.commit();
+  } catch (err) {
+    console.error('Error batch syncing slots to Firestore:', err);
+  }
+};
+
+const deleteBookingFromFirestore = async (bookingId) => {
+  try {
+    if (bookingId) {
+      await deleteDoc(doc(db, 'bookings', bookingId));
+    }
+  } catch (err) {
+    console.error('Error deleting booking from Firestore:', err);
+  }
+};
+
+const syncUserToFirestore = async (user) => {
+  try {
+    if (user && user.id) {
+      await setDoc(doc(db, 'users', user.id), user);
+    }
+  } catch (err) {
+    console.error('Error syncing user to Firestore:', err);
+  }
+};
+
+const deleteUserFromFirestore = async (userId) => {
+  try {
+    if (userId) {
+      await deleteDoc(doc(db, 'users', userId));
+    }
+  } catch (err) {
+    console.error('Error deleting user from Firestore:', err);
+  }
+};
+
+const syncSettingsToFirestore = async (settings) => {
+  try {
+    await setDoc(doc(db, 'settings', 'admin_config'), settings);
+  } catch (err) {
+    console.error('Error syncing settings to Firestore:', err);
+  }
+};
+
+let isFirestoreListenerActive = false;
+
 export const initRealtimeDatabase = () => {
   if (!localStorage.getItem(STORAGE_KEY_SERVICES)) {
     localStorage.setItem(STORAGE_KEY_SERVICES, JSON.stringify(DEFAULT_SERVICES));
@@ -163,7 +253,9 @@ export const initRealtimeDatabase = () => {
     localStorage.setItem(STORAGE_KEY_COURTS, JSON.stringify(DEFAULT_COURTS));
   }
   if (!localStorage.getItem(STORAGE_KEY_SLOTS)) {
-    localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(generateDefaultBadmintonSlots()));
+    const initialSlots = generateDefaultBadmintonSlots();
+    localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(initialSlots));
+    syncSlotsBatchToFirestore(initialSlots);
   }
   if (!localStorage.getItem(STORAGE_KEY_BOOKINGS)) {
     localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify([]));
@@ -173,13 +265,86 @@ export const initRealtimeDatabase = () => {
   }
   if (!localStorage.getItem(STORAGE_KEY_SETTINGS)) {
     localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
+    syncSettingsToFirestore(DEFAULT_SETTINGS);
   }
   if (!localStorage.getItem(STORAGE_KEY_USERS)) {
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(DEFAULT_USERS));
+    if (DEFAULT_USERS[0]) syncUserToFirestore(DEFAULT_USERS[0]);
+  }
+
+  // FIRESTORE REALTIME LISTENERS (MULTIDEVICE REALTIME SYNC)
+  if (!isFirestoreListenerActive) {
+    isFirestoreListenerActive = true;
+
+    // 1. Listen Bookings
+    onSnapshot(collection(db, 'bookings'), (snapshot) => {
+      const remoteBookings = [];
+      snapshot.forEach(docSnap => {
+        remoteBookings.push(docSnap.data());
+      });
+      // Sort newest first
+      remoteBookings.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(remoteBookings));
+
+      broadcastChannel.postMessage({
+        type: 'REALTIME_BOOKING_SYNC_REMOTE',
+        timestamp: Date.now()
+      });
+    }, (err) => console.warn('Firestore Bookings listener:', err));
+
+    // 2. Listen Slots
+    onSnapshot(collection(db, 'slots'), (snapshot) => {
+      if (snapshot.empty) return;
+      const localSlots = JSON.parse(localStorage.getItem(STORAGE_KEY_SLOTS) || '[]');
+      const slotsMap = new Map();
+      localSlots.forEach(s => slotsMap.set(s.id, s));
+
+      snapshot.forEach(docSnap => {
+        const slotData = docSnap.data();
+        if (slotData && slotData.id) {
+          slotsMap.set(slotData.id, slotData);
+        }
+      });
+
+      const mergedSlots = Array.from(slotsMap.values());
+      mergedSlots.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+      localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(mergedSlots));
+
+      broadcastChannel.postMessage({
+        type: 'REALTIME_SLOT_SYNC_REMOTE',
+        timestamp: Date.now()
+      });
+    }, (err) => console.warn('Firestore Slots listener:', err));
+
+    // 3. Listen Users
+    onSnapshot(collection(db, 'users'), (snapshot) => {
+      if (snapshot.empty) return;
+      const remoteUsers = [];
+      snapshot.forEach(docSnap => {
+        remoteUsers.push(docSnap.data());
+      });
+      if (remoteUsers.length > 0) {
+        localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(remoteUsers));
+        broadcastChannel.postMessage({
+          type: 'REALTIME_USER_SYNC_REMOTE',
+          timestamp: Date.now()
+        });
+      }
+    }, (err) => console.warn('Firestore Users listener:', err));
+
+    // 4. Listen Settings
+    onSnapshot(collection(db, 'settings'), (snapshot) => {
+      snapshot.forEach(docSnap => {
+        if (docSnap.id === 'admin_config') {
+          const remoteSettings = docSnap.data();
+          localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(remoteSettings));
+        }
+      });
+    }, (err) => console.warn('Firestore Settings listener:', err));
   }
 };
 
-// USER & ADMIN AUTH MANAGEMENT (DENGAN SHA-256 HASHING)
+// USER & ADMIN AUTH MANAGEMENT
 export const getRegisteredUsers = () => {
   initRealtimeDatabase();
   return JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '[]');
@@ -205,7 +370,7 @@ export const registerNewUser = async ({ name, phone, password }) => {
     id: `usr-${Date.now()}`,
     name: name.trim(),
     phone: cleanPhone,
-    password: hashedPassword, // DISIMPAN DALAM BENTUK SHA-256 HASH!
+    password: hashedPassword,
     role: 'user',
     created_at: new Date().toISOString()
   };
@@ -215,10 +380,11 @@ export const registerNewUser = async ({ name, phone, password }) => {
   localStorage.setItem(STORAGE_KEY_ACTIVE_USER, JSON.stringify(newUser));
   updateLastActivity();
 
+  syncUserToFirestore(newUser);
+
   return { success: true, role: 'user', user: newUser };
 };
 
-// CRUD UTK ADMIN KELOLA AKUN USER/PEMAIN (DENGAN ENKRIPSI HASH)
 export const createUserAdmin = async ({ name, phone, password, role = 'user' }) => {
   const users = getRegisteredUsers();
   const cleanPhone = phone.trim().replace(/[^0-9]/g, '');
@@ -234,13 +400,15 @@ export const createUserAdmin = async ({ name, phone, password, role = 'user' }) 
     id: `usr-${Date.now()}`,
     name: name.trim(),
     phone: cleanPhone,
-    password: hashedPassword, // ENKRIPSI SHA-256
+    password: hashedPassword,
     role: role || 'user',
     created_at: new Date().toISOString()
   };
 
   users.unshift(newUser);
   localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+
+  syncUserToFirestore(newUser);
 
   broadcastChannel.postMessage({
     type: 'REALTIME_USER_CREATED',
@@ -262,11 +430,12 @@ export const updateUserAdmin = async (userId, { name, phone, password, role }) =
       ...users[idx],
       name: name ? name.trim() : users[idx].name,
       phone: cleanPhone,
-      password: hashedPassword, // ENKRIPSI SHA-256
+      password: hashedPassword,
       role: role || users[idx].role || 'user'
     };
 
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+    syncUserToFirestore(users[idx]);
 
     broadcastChannel.postMessage({
       type: 'REALTIME_USER_UPDATED',
@@ -286,6 +455,7 @@ export const deleteUserAdmin = (userId) => {
     const deletedUser = users[idx];
     users.splice(idx, 1);
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+    deleteUserFromFirestore(userId);
 
     broadcastChannel.postMessage({
       type: 'REALTIME_USER_DELETED',
@@ -310,7 +480,7 @@ export const authenticateAnyAccount = async ({ usernameOrPhone, password }) => {
     return { success: true, role: 'admin' };
   }
 
-  // 2. USER (MEMBANDINGKAN HASH SHA-256)
+  // 2. USER
   const users = getRegisteredUsers();
   const cleanPhone = inputClean.replace(/[^0-9]/g, '');
   const hashedInputPass = await hashPassword(passClean);
@@ -423,10 +593,12 @@ export const bookMultiHourSlotsAtomic = async (bookingPayload) => {
     targetSlots.push(slotObj);
   }
 
+  const updatedSlotsForCloud = [];
   targetSlots.forEach(slot => {
     const idx = currentSlots.findIndex(s => s.id === slot.id);
     if (idx !== -1) {
       currentSlots[idx].status = 'booked';
+      updatedSlotsForCloud.push(currentSlots[idx]);
     }
   });
 
@@ -480,6 +652,10 @@ export const bookMultiHourSlotsAtomic = async (bookingPayload) => {
   currentBookings.unshift(newBooking);
   localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(currentBookings));
 
+  // SYNC TO FIREBASE CLOUD REALTIME
+  syncBookingToFirestore(newBooking);
+  syncSlotsBatchToFirestore(updatedSlotsForCloud);
+
   broadcastChannel.postMessage({
     type: 'REALTIME_MULTI_BOOKING_CREATED',
     slot_ids: targetSlots.map(s => s.id),
@@ -500,6 +676,8 @@ export const toggleSlotStatusByAdmin = (slot_id, newStatus) => {
     currentSlots[idx].status = newStatus;
     localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(currentSlots));
     
+    syncSlotToFirestore(currentSlots[idx]);
+
     broadcastChannel.postMessage({
       type: 'REALTIME_SLOT_TOGGLED',
       slot_id,
@@ -530,7 +708,7 @@ export const updateBookingStatus = (booking_code_or_token, newStatus) => {
       }
     }
 
-    // PENTING: Jika DIBATALKAN ('cancelled') ATAU SELESAI MAIN ('completed'), slot lapangan DIBUKA KEMBALI KE PUBLIK ('available')
+    const modifiedSlots = [];
     if (newStatus === 'cancelled' || newStatus === 'completed') {
       const currentSlots = getSlots();
       const slotsToFree = booking.slot_ids || [booking.slot_id];
@@ -538,23 +716,27 @@ export const updateBookingStatus = (booking_code_or_token, newStatus) => {
         const slotIdx = currentSlots.findIndex(s => s.id === sId);
         if (slotIdx !== -1) {
           currentSlots[slotIdx].status = 'available';
+          modifiedSlots.push(currentSlots[slotIdx]);
         }
       });
       localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(currentSlots));
     } else {
-      // Jika Sedang Bermain ('playing') atau Terkonfirmasi ('confirmed'), Slot TETAP TERKUNCI ('booked')!
       const currentSlots = getSlots();
       const slotsToLock = booking.slot_ids || [booking.slot_id];
       slotsToLock.forEach(sId => {
         const slotIdx = currentSlots.findIndex(s => s.id === sId);
         if (slotIdx !== -1) {
           currentSlots[slotIdx].status = 'booked';
+          modifiedSlots.push(currentSlots[slotIdx]);
         }
       });
       localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(currentSlots));
     }
 
     localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(currentBookings));
+
+    syncBookingToFirestore(booking);
+    syncSlotsBatchToFirestore(modifiedSlots);
 
     broadcastChannel.postMessage({
       type: 'REALTIME_BOOKING_STATUS_UPDATED',
@@ -575,6 +757,7 @@ export const updateBookingDetails = (bookingId, updatedFields) => {
   if (idx !== -1) {
     const oldBooking = currentBookings[idx];
     const newStatus = updatedFields.status || oldBooking.status;
+    const modifiedSlots = [];
 
     if ((newStatus === 'cancelled' || newStatus === 'completed') && oldBooking.status !== newStatus) {
       const currentSlots = getSlots();
@@ -583,6 +766,7 @@ export const updateBookingDetails = (bookingId, updatedFields) => {
         const slotIdx = currentSlots.findIndex(s => s.id === sId);
         if (slotIdx !== -1) {
           currentSlots[slotIdx].status = 'available';
+          modifiedSlots.push(currentSlots[slotIdx]);
         }
       });
       localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(currentSlots));
@@ -602,6 +786,9 @@ export const updateBookingDetails = (bookingId, updatedFields) => {
 
     localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(currentBookings));
 
+    syncBookingToFirestore(currentBookings[idx]);
+    if (modifiedSlots.length > 0) syncSlotsBatchToFirestore(modifiedSlots);
+
     broadcastChannel.postMessage({
       type: 'REALTIME_BOOKING_UPDATED',
       booking_id: oldBooking.id,
@@ -618,6 +805,7 @@ export const deleteBookingAdmin = (bookingId) => {
   const idx = currentBookings.findIndex(b => b.id === bookingId || b.booking_code === bookingId);
   if (idx !== -1) {
     const bookingToDelete = currentBookings[idx];
+    const modifiedSlots = [];
 
     const currentSlots = getSlots();
     const slotsToFree = bookingToDelete.slot_ids || [bookingToDelete.slot_id];
@@ -625,12 +813,16 @@ export const deleteBookingAdmin = (bookingId) => {
       const slotIdx = currentSlots.findIndex(s => s.id === sId);
       if (slotIdx !== -1) {
         currentSlots[slotIdx].status = 'available';
+        modifiedSlots.push(currentSlots[slotIdx]);
       }
     });
     localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(currentSlots));
 
     currentBookings.splice(idx, 1);
     localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(currentBookings));
+
+    deleteBookingFromFirestore(bookingToDelete.id);
+    syncSlotsBatchToFirestore(modifiedSlots);
 
     broadcastChannel.postMessage({
       type: 'REALTIME_BOOKING_DELETED',
@@ -649,6 +841,7 @@ export const scanQRCodeCheckIn = (qrToken) => {
 
 export const saveAdminSettings = (newSettings) => {
   localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(newSettings));
+  syncSettingsToFirestore(newSettings);
 };
 
 export const deleteMultipleBookingsAdmin = (bookingIds = []) => {
@@ -656,17 +849,20 @@ export const deleteMultipleBookingsAdmin = (bookingIds = []) => {
   initRealtimeDatabase();
   const currentBookings = getBookings();
   const currentSlots = getSlots();
+  const modifiedSlots = [];
 
   const idsSet = new Set(bookingIds);
   const remainingBookings = [];
 
   currentBookings.forEach(b => {
     if (idsSet.has(b.id) || idsSet.has(b.booking_code)) {
+      deleteBookingFromFirestore(b.id);
       const slotsToFree = b.slot_ids || (b.slot_id ? [b.slot_id] : []);
       slotsToFree.forEach(sId => {
         const slotIdx = currentSlots.findIndex(s => s.id === sId);
         if (slotIdx !== -1) {
           currentSlots[slotIdx].status = 'available';
+          modifiedSlots.push(currentSlots[slotIdx]);
         }
       });
     } else {
@@ -676,6 +872,8 @@ export const deleteMultipleBookingsAdmin = (bookingIds = []) => {
 
   localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(remainingBookings));
   localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(currentSlots));
+
+  syncSlotsBatchToFirestore(modifiedSlots);
 
   broadcastChannel.postMessage({
     type: 'REALTIME_BOOKING_DELETED_BULK',
@@ -691,7 +889,13 @@ export const deleteMultipleUsersAdmin = (userIds = []) => {
   initRealtimeDatabase();
   const users = getRegisteredUsers();
   const idsSet = new Set(userIds);
-  const remainingUsers = users.filter(u => !idsSet.has(u.id));
+  const remainingUsers = users.filter(u => {
+    if (idsSet.has(u.id)) {
+      deleteUserFromFirestore(u.id);
+      return false;
+    }
+    return true;
+  });
 
   localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(remainingUsers));
 
