@@ -28,6 +28,31 @@ const STORAGE_KEY_LAST_ACTIVITY = 'rts_last_activity_timestamp_v14';
 const ONE_HOUR_MS = 60 * 60 * 1000; // 1 Jam Inactivity Timeout
 
 const broadcastChannel = new BroadcastChannel('badminton_booking_realtime_channel');
+const realtimeSubscribers = new Set();
+
+export const subscribeRealtimeUpdates = (callback) => {
+  if (callback) realtimeSubscribers.add(callback);
+
+  const handler = (event) => {
+    if (callback) callback(event.data);
+  };
+  broadcastChannel.addEventListener('message', handler);
+
+  return () => {
+    if (callback) realtimeSubscribers.delete(callback);
+    broadcastChannel.removeEventListener('message', handler);
+  };
+};
+
+export const notifyAllSubscribers = (data = {}) => {
+  realtimeSubscribers.forEach((cb) => {
+    try {
+      cb(data);
+    } catch (err) {
+      console.error('Error notifying subscriber:', err);
+    }
+  });
+};
 
 // UTILITY HASH PASSWORD (SHA-256 ENCRYPTION)
 export const hashPassword = async (plainPassword) => {
@@ -276,16 +301,36 @@ export const initRealtimeDatabase = () => {
   if (!isFirestoreListenerActive) {
     isFirestoreListenerActive = true;
 
+    // Fetch initial documents immediately from Cloud
+    getDocs(collection(db, 'bookings')).then(snapshot => {
+      if (!snapshot.empty) {
+        const remoteBookings = [];
+        snapshot.forEach(docSnap => remoteBookings.push(docSnap.data()));
+        remoteBookings.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(remoteBookings));
+        notifyAllSubscribers({ type: 'FIREBASE_BOOKING_INIT' });
+      }
+    }).catch(err => console.warn('Initial bookings getDocs err:', err));
+
+    getDocs(collection(db, 'users')).then(snapshot => {
+      if (!snapshot.empty) {
+        const remoteUsers = [];
+        snapshot.forEach(docSnap => remoteUsers.push(docSnap.data()));
+        localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(remoteUsers));
+        notifyAllSubscribers({ type: 'FIREBASE_USER_INIT' });
+      }
+    }).catch(err => console.warn('Initial users getDocs err:', err));
+
     // 1. Listen Bookings
     onSnapshot(collection(db, 'bookings'), (snapshot) => {
       const remoteBookings = [];
       snapshot.forEach(docSnap => {
         remoteBookings.push(docSnap.data());
       });
-      // Sort newest first
       remoteBookings.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
       localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(remoteBookings));
 
+      notifyAllSubscribers({ type: 'FIREBASE_BOOKING_SYNC', timestamp: Date.now() });
       broadcastChannel.postMessage({
         type: 'REALTIME_BOOKING_SYNC_REMOTE',
         timestamp: Date.now()
@@ -310,6 +355,7 @@ export const initRealtimeDatabase = () => {
       mergedSlots.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
       localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(mergedSlots));
 
+      notifyAllSubscribers({ type: 'FIREBASE_SLOT_SYNC', timestamp: Date.now() });
       broadcastChannel.postMessage({
         type: 'REALTIME_SLOT_SYNC_REMOTE',
         timestamp: Date.now()
@@ -325,6 +371,7 @@ export const initRealtimeDatabase = () => {
       });
       if (remoteUsers.length > 0) {
         localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(remoteUsers));
+        notifyAllSubscribers({ type: 'FIREBASE_USER_SYNC', timestamp: Date.now() });
         broadcastChannel.postMessage({
           type: 'REALTIME_USER_SYNC_REMOTE',
           timestamp: Date.now()
@@ -338,6 +385,7 @@ export const initRealtimeDatabase = () => {
         if (docSnap.id === 'admin_config') {
           const remoteSettings = docSnap.data();
           localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(remoteSettings));
+          notifyAllSubscribers({ type: 'FIREBASE_SETTINGS_SYNC', timestamp: Date.now() });
         }
       });
     }, (err) => console.warn('Firestore Settings listener:', err));
@@ -381,6 +429,7 @@ export const registerNewUser = async ({ name, phone, password }) => {
   updateLastActivity();
 
   syncUserToFirestore(newUser);
+  notifyAllSubscribers({ type: 'USER_REGISTERED', user: newUser });
 
   return { success: true, role: 'user', user: newUser };
 };
@@ -409,6 +458,7 @@ export const createUserAdmin = async ({ name, phone, password, role = 'user' }) 
   localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
 
   syncUserToFirestore(newUser);
+  notifyAllSubscribers({ type: 'USER_CREATED_ADMIN', user: newUser });
 
   broadcastChannel.postMessage({
     type: 'REALTIME_USER_CREATED',
@@ -436,6 +486,7 @@ export const updateUserAdmin = async (userId, { name, phone, password, role }) =
 
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
     syncUserToFirestore(users[idx]);
+    notifyAllSubscribers({ type: 'USER_UPDATED_ADMIN', user: users[idx] });
 
     broadcastChannel.postMessage({
       type: 'REALTIME_USER_UPDATED',
@@ -456,6 +507,7 @@ export const deleteUserAdmin = (userId) => {
     users.splice(idx, 1);
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
     deleteUserFromFirestore(userId);
+    notifyAllSubscribers({ type: 'USER_DELETED_ADMIN', userId });
 
     broadcastChannel.postMessage({
       type: 'REALTIME_USER_DELETED',
@@ -533,14 +585,6 @@ export const getSettings = () => {
     localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
   }
   return settings;
-};
-
-export const subscribeRealtimeUpdates = (callback) => {
-  const handler = (event) => {
-    if (callback) callback(event.data);
-  };
-  broadcastChannel.addEventListener('message', handler);
-  return () => broadcastChannel.removeEventListener('message', handler);
 };
 
 export const bookMultiHourSlotsAtomic = async (bookingPayload) => {
@@ -656,6 +700,8 @@ export const bookMultiHourSlotsAtomic = async (bookingPayload) => {
   syncBookingToFirestore(newBooking);
   syncSlotsBatchToFirestore(updatedSlotsForCloud);
 
+  notifyAllSubscribers({ type: 'BOOKING_CREATED', booking: newBooking });
+
   broadcastChannel.postMessage({
     type: 'REALTIME_MULTI_BOOKING_CREATED',
     slot_ids: targetSlots.map(s => s.id),
@@ -677,6 +723,7 @@ export const toggleSlotStatusByAdmin = (slot_id, newStatus) => {
     localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(currentSlots));
     
     syncSlotToFirestore(currentSlots[idx]);
+    notifyAllSubscribers({ type: 'SLOT_TOGGLED', slot_id, newStatus });
 
     broadcastChannel.postMessage({
       type: 'REALTIME_SLOT_TOGGLED',
@@ -737,6 +784,7 @@ export const updateBookingStatus = (booking_code_or_token, newStatus) => {
 
     syncBookingToFirestore(booking);
     syncSlotsBatchToFirestore(modifiedSlots);
+    notifyAllSubscribers({ type: 'BOOKING_STATUS_UPDATED', booking_id: booking.id, newStatus });
 
     broadcastChannel.postMessage({
       type: 'REALTIME_BOOKING_STATUS_UPDATED',
@@ -788,6 +836,7 @@ export const updateBookingDetails = (bookingId, updatedFields) => {
 
     syncBookingToFirestore(currentBookings[idx]);
     if (modifiedSlots.length > 0) syncSlotsBatchToFirestore(modifiedSlots);
+    notifyAllSubscribers({ type: 'BOOKING_UPDATED', booking_id: oldBooking.id });
 
     broadcastChannel.postMessage({
       type: 'REALTIME_BOOKING_UPDATED',
@@ -823,6 +872,7 @@ export const deleteBookingAdmin = (bookingId) => {
 
     deleteBookingFromFirestore(bookingToDelete.id);
     syncSlotsBatchToFirestore(modifiedSlots);
+    notifyAllSubscribers({ type: 'BOOKING_DELETED', booking_id: bookingToDelete.id });
 
     broadcastChannel.postMessage({
       type: 'REALTIME_BOOKING_DELETED',
@@ -842,6 +892,7 @@ export const scanQRCodeCheckIn = (qrToken) => {
 export const saveAdminSettings = (newSettings) => {
   localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(newSettings));
   syncSettingsToFirestore(newSettings);
+  notifyAllSubscribers({ type: 'SETTINGS_SAVED', settings: newSettings });
 };
 
 export const deleteMultipleBookingsAdmin = (bookingIds = []) => {
@@ -874,6 +925,7 @@ export const deleteMultipleBookingsAdmin = (bookingIds = []) => {
   localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(currentSlots));
 
   syncSlotsBatchToFirestore(modifiedSlots);
+  notifyAllSubscribers({ type: 'BOOKINGS_DELETED_BULK', booking_ids: bookingIds });
 
   broadcastChannel.postMessage({
     type: 'REALTIME_BOOKING_DELETED_BULK',
@@ -898,6 +950,8 @@ export const deleteMultipleUsersAdmin = (userIds = []) => {
   });
 
   localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(remainingUsers));
+
+  notifyAllSubscribers({ type: 'USERS_DELETED_BULK', user_ids: userIds });
 
   broadcastChannel.postMessage({
     type: 'REALTIME_USER_DELETED_BULK',
