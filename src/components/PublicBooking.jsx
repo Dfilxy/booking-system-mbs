@@ -826,10 +826,10 @@ export default function PublicBooking() {
                 href={adminWaUrl || `https://wa.me/${currentAdminPhone.replace(/[^0-9]/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center space-x-2 border border-emerald-400/30 shadow-lg transition"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-500 hover:to-teal-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center space-x-2 text-center"
               >
-                <Phone className="w-4 h-4 text-white shrink-0" />
-                <span>Kirim Notifikasi Ke WA Admin ({currentAdminPhone})</span>
+                <Phone className="w-4 h-4 text-slate-950 shrink-0" />
+                <span className="whitespace-nowrap">Kirim Notifikasi WA Admin</span>
               </a>
 
               <button
