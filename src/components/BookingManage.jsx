@@ -140,10 +140,10 @@ export default function BookingManage() {
           </div>
           <button
             type="submit"
-            className="px-7 py-3.5 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-orange-500/25 flex items-center justify-center space-x-2 shrink-0 border border-amber-300/50 cursor-pointer"
+            className="px-6 py-3.5 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-2xl text-xs sm:text-sm transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-orange-500/25 flex items-center justify-center space-x-2 shrink-0 border border-orange-400/30 cursor-pointer"
           >
-            <Search className="w-4 h-4 text-slate-950 shrink-0" />
-            <span>🔍 Cari Tiket & Reservasi</span>
+            <Search className="w-4 h-4 text-white shrink-0" />
+            <span>Cari Tiket & Reservasi</span>
           </button>
         </form>
 

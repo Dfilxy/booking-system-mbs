@@ -732,21 +732,21 @@ export default function PublicBooking() {
               <button
                 type="submit"
                 disabled={loading || !selectedStartTime}
-                className={`w-full py-4 rounded-2xl font-black text-sm sm:text-base transition-all transform flex items-center justify-center space-x-2 shadow-xl cursor-pointer ${
+                className={`w-full py-3.5 rounded-2xl font-bold text-sm sm:text-base transition-all transform flex items-center justify-center space-x-2 shadow-lg cursor-pointer ${
                   loading || !selectedStartTime
-                    ? 'bg-slate-800/80 text-slate-500 border border-slate-700 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 shadow-orange-500/30 border border-amber-300/50 hover:scale-[1.02] active:scale-[0.98]'
+                    ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                    : 'bg-orange-500 hover:bg-orange-400 text-white shadow-orange-500/25 border border-orange-400/30 hover:scale-[1.01] active:scale-[0.99]'
                 }`}
               >
                 {loading ? (
-                  <span className="flex items-center space-x-2 text-slate-950 font-extrabold">
-                    <span className="w-4 h-4 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin"></span>
+                  <span className="flex items-center space-x-2 text-white font-bold">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                     <span>Memproses Reservasi Anda...</span>
                   </span>
                 ) : (
                   <>
-                    <span>🏸 Sewa Lapangan Sekarang</span>
-                    <ChevronRight className="w-5 h-5 text-slate-950" />
+                    <span>Sewa Lapangan Sekarang</span>
+                    <ChevronRight className="w-4 h-4 text-white" />
                   </>
                 )}
               </button>
