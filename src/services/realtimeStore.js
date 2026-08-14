@@ -592,8 +592,11 @@ export const logoutActiveUser = () => {
   localStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
   localStorage.removeItem(STORAGE_KEY_LAST_ACTIVITY);
   localStorage.removeItem('rts_current_role');
+  localStorage.removeItem('rts_admin_authenticated_v14');
   sessionStorage.removeItem('rts_admin_authenticated');
   sessionStorage.removeItem('rts_current_role');
+  sessionStorage.removeItem('rts_tab_role');
+  sessionStorage.removeItem('admin_authenticated');
 };
 
 export const getServices = () => JSON.parse(localStorage.getItem(STORAGE_KEY_SERVICES) || '[]');

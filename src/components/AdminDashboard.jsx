@@ -436,11 +436,18 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const checkAuth = () => {
+      if (isSessionExpired()) {
+        setIsAuthenticated(false);
+        logoutActiveUser();
+        return;
+      }
       const isAuth = sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true' ||
                      sessionStorage.getItem('rts_admin_authenticated') === 'true' ||
                      localStorage.getItem('rts_admin_authenticated_v14') === 'true';
       if (isAuth) {
         setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
       }
     };
 
