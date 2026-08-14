@@ -9,7 +9,8 @@ import {
   getCurrentSession,
   logoutActiveUser,
   updateLastActivity,
-  isSessionExpired
+  isSessionExpired,
+  getActiveUser
 } from './services/realtimeStore';
 
 export default function App() {
