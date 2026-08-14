@@ -10,6 +10,10 @@ export default function BookingManage() {
   const [message, setMessage] = useState('');
   const [expandedQr, setExpandedQr] = useState({});
 
+  // Pagination State for User Bookings
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+
   const refreshUserBookings = (term) => {
     const allBookings = getBookings();
     const activeUser = getActiveUser();
@@ -27,6 +31,7 @@ export default function BookingManage() {
       if (exactMatch.length > 0) {
         setMatchingBookings(exactMatch);
         setMessage('');
+        setCurrentPage(1);
         return;
       }
 
@@ -39,11 +44,13 @@ export default function BookingManage() {
       if (phoneOrNameMatch.length > 0) {
         setMatchingBookings(phoneOrNameMatch.sort((a, b) => (b.booking_date > a.booking_date ? 1 : -1)));
         setMessage('');
+        setCurrentPage(1);
         return;
       }
 
       setMatchingBookings([]);
       setMessage('Tidak ditemukan tiket atau riwayat booking untuk kata kunci tersebut.');
+      setCurrentPage(1);
     } else {
       // Auto-load berdasarkan user login atau nomor telepon booking terakhir
       const targetPhone = activeUser?.phone || lastPhone;
@@ -101,6 +108,13 @@ export default function BookingManage() {
     setExpandedQr(prev => ({ ...prev, [bookingId]: !prev[bookingId] }));
   };
 
+  // Derived Pagination Calculations
+  const totalBookings = matchingBookings.length;
+  const totalPages = Math.ceil(totalBookings / pageSize) || 1;
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+  const paginatedBookings = matchingBookings.slice(startIndex, startIndex + pageSize);
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 sm:py-10 space-y-8">
       
@@ -126,7 +140,7 @@ export default function BookingManage() {
           </div>
           <button
             type="submit"
-            className="px-6 py-3.5 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-orange-500/20 flex items-center justify-center space-x-2 shrink-0 border border-orange-400/30"
+            className="px-6 py-3.5 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-orange-500/20 flex items-center justify-center space-x-2 shrink-0 border border-orange-400/30 cursor-pointer"
           >
             <span>Cari Reservasi</span>
           </button>
@@ -150,8 +164,9 @@ export default function BookingManage() {
             </h2>
           </div>
 
+          {/* Cards List */}
           <div className="space-y-4">
-            {matchingBookings.map((booking) => {
+            {paginatedBookings.map((booking) => {
               const showQr = expandedQr[booking.id];
 
               return (
@@ -238,7 +253,7 @@ export default function BookingManage() {
                     <button
                       type="button"
                       onClick={() => toggleQrView(booking.id)}
-                      className="w-full sm:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold text-xs flex items-center justify-center space-x-1.5 border border-slate-700 transition"
+                      className="w-full sm:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold text-xs flex items-center justify-center space-x-1.5 border border-slate-700 transition cursor-pointer"
                     >
                       <QrCode className="w-4 h-4 text-emerald-400" />
                       <span>{showQr ? 'Sembunyikan QR Code' : 'Lihat QR Code'}</span>
@@ -248,7 +263,7 @@ export default function BookingManage() {
                       <button
                         type="button"
                         onClick={() => downloadETicketPNG(booking)}
-                        className="flex-1 sm:flex-initial px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-purple-600/20 border border-purple-400/30 transition"
+                        className="flex-1 sm:flex-initial px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-purple-600/20 border border-purple-400/30 transition cursor-pointer"
                       >
                         <Download className="w-4 h-4" />
                         <span>Unduh E-Tiket (PNG)</span>
@@ -259,7 +274,7 @@ export default function BookingManage() {
                           type="button"
                           onClick={() => handleCancelBooking(booking.booking_code)}
                           title="Batalkan Reservasi Ini"
-                          className="px-3 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl font-bold text-xs transition flex items-center justify-center"
+                          className="px-3 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl font-bold text-xs transition flex items-center justify-center cursor-pointer"
                         >
                           <XCircle className="w-4 h-4" />
                         </button>
@@ -271,6 +286,91 @@ export default function BookingManage() {
               );
             })}
           </div>
+
+          {/* ULTRA-SLEEK COMPACT HORIZONTAL PAGINATION BAR FOR USER TICKETS */}
+          {totalBookings > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm shadow-lg text-xs mt-6">
+              
+              {/* Page Info & Limit Selector */}
+              <div className="flex items-center space-x-3 text-slate-400">
+                <span className="font-medium text-[11px] sm:text-xs">
+                  Menampilkan <strong className="text-white font-mono">{startIndex + 1}</strong> - <strong className="text-white font-mono">{Math.min(startIndex + pageSize, totalBookings)}</strong> dari <strong className="text-orange-400 font-mono">{totalBookings}</strong> tiket
+                </span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="bg-slate-950 border border-slate-800 text-white font-bold text-[11px] px-2 py-1 rounded-lg focus:outline-none focus:border-orange-500 cursor-pointer"
+                >
+                  <option value={5}>5 / Hal</option>
+                  <option value={10}>10 / Hal</option>
+                  <option value={20}>20 / Hal</option>
+                  <option value={50}>50 / Hal</option>
+                </select>
+              </div>
+
+              {/* Navigation Page Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center space-x-1 sm:space-x-1.5">
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={safeCurrentPage === 1}
+                    className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center transition disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                    title="Halaman Pertama"
+                  >
+                    «
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={safeCurrentPage === 1}
+                    className="px-2.5 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] flex items-center justify-center transition disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    ‹ Prev
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(p => p === 1 || p === totalPages || Math.abs(p - safeCurrentPage) <= 1)
+                    .map((p, idx, arr) => {
+                      const showEllipsis = idx > 0 && p - arr[idx - 1] > 1;
+                      return (
+                        <React.Fragment key={p}>
+                          {showEllipsis && <span className="text-slate-600 text-xs px-1">...</span>}
+                          <button
+                            onClick={() => setCurrentPage(p)}
+                            className={`w-7 h-7 rounded-lg text-xs font-black transition cursor-pointer ${
+                              safeCurrentPage === p
+                                ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30 scale-105'
+                                : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        </React.Fragment>
+                      );
+                    })}
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={safeCurrentPage === totalPages}
+                    className="px-2.5 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] flex items-center justify-center transition disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    Next ›
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={safeCurrentPage === totalPages}
+                    className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center transition disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                    title="Halaman Terakhir"
+                  >
+                    »
+                  </button>
+                </div>
+              )}
+
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center py-12 bg-slate-900/50 rounded-3xl border border-slate-800/80 p-6 space-y-3">
