@@ -216,8 +216,7 @@ export default function App() {
         </main>
       </div>
 
-      {/* Floating WhatsApp & Instagram Quick Contact Widget */}
-      <FloatingContactWidget />
+ 
 
       {/* Bespoke Comprehensive Web Footer */}
       {!isRouteAdmin ? (
