@@ -1,12 +1,12 @@
 /**
- * MODUL INTEGRASI WHATSAPP API - GOR BULU TANGKIS (3 LAPANGAN)
- * Pesan Berperspektif Pemain (User) -> Admin GOR
+ * MODUL INTEGRASI WHATSAPP API & TEMPLATE PESAN RESMI - GOR MBS
+ * Template Notifikasi Bersih, Informatif, & Profesional Tanpa Emoji Berlebihan
  */
 
 import { getSettings } from './realtimeStore';
 
 export const formatPhoneForWA = (phone) => {
-  if (!phone) return '62895349066544';
+  if (!phone) return '628812176486';
   let clean = phone.toString().replace(/[^0-9]/g, '');
   if (clean.startsWith('0')) {
     clean = '62' + clean.slice(1);
@@ -14,7 +14,7 @@ export const formatPhoneForWA = (phone) => {
   return clean;
 };
 
-// FORMAT PESAN DARI PERSPEKTIF PEMAIN / USER SANGAT SOPAN -> WA ADMIN
+// 1. FORMAT NOTIFIKASI RESERVASI BARU UNTUK ADMIN (DARI PEMAIN -> WA ADMIN)
 export const formatAdminWAMessage = (bookingData) => {
   const {
     booking_code,
@@ -23,6 +23,7 @@ export const formatAdminWAMessage = (bookingData) => {
     staff_name,
     booking_date,
     booking_time,
+    duration_hours,
     player_count,
     total_amount,
     qr_code_token,
@@ -30,50 +31,71 @@ export const formatAdminWAMessage = (bookingData) => {
   } = bookingData;
 
   const formattedAmount = Number(total_amount).toLocaleString('id-ID');
+  const duration = duration_hours || 1;
 
-  return `Halo Admin GOR Bulu Tangkis 🏸,
+  return `*NOTIFIKASI RESERVASI BARU - GOR MBS*
 
-Saya baru saja melakukan booking sewa lapangan melalui website. Berikut rincian reservasi saya:
+Yth. Admin GOR MBS,
+Berikut adalah rincian reservasi sewa lapangan badminton baru yang baru saja didaftarkan melalui website:
 
-• Nama Pemain: *${customer_name}*
-• No. WhatsApp: *${customer_phone}*
-• Kode Booking: *${booking_code}*
-• Lapangan: *${staff_name}*
-• Jumlah Pemain: *${player_count} Orang*
-• Jadwal Main: *${booking_date}* (${booking_time} WIB)
-• Total Tarif: *Rp ${formattedAmount}*
-• Token QR Tiket: *${qr_code_token}*
-${notes ? `• Catatan: *${notes}*\n` : ''}
-Mohon konfirmasi dan verifikasinya ya Admin. Terima kasih! 🙏`;
+*INFORMASI PEMESAN:*
+- Nama Pemain: ${customer_name}
+- No. WhatsApp: ${customer_phone}
+
+*RINCIAN SEWA LAPANGAN:*
+- Kode Booking: ${booking_code}
+- Lapangan: ${staff_name}
+- Tanggal Main: ${booking_date}
+- Jam Main: ${booking_time} WIB (${duration} Jam)
+- Jumlah Pemain: ${player_count} Orang
+- Total Tarif: Rp ${formattedAmount}
+- Token QR Check-In: ${qr_code_token}
+${notes ? `- Catatan Tambahan: ${notes}\n` : ''}
+Mohon konfirmasi dan verifikasi reservasi ini pada sistem Admin. Terima kasih.`;
 };
 
-// FORMAT PESAN BALASAN DARI ADMIN -> PEMAIN / USER (SAAT VERIFIKASI QR)
+// 2. FORMAT BUKTI KONFIRMASI TIKET UNTUK PEMAIN (BALASAN ADMIN -> WA PEMAIN)
 export const formatCustomerVerifiedWAMessage = (bookingData) => {
   const {
     booking_code,
     customer_name,
+    customer_phone,
     staff_name,
     booking_date,
     booking_time,
+    duration_hours,
     player_count,
-    total_amount
+    total_amount,
+    qr_code_token
   } = bookingData;
 
   const formattedAmount = Number(total_amount).toLocaleString('id-ID');
+  const duration = duration_hours || 1;
 
-  return `Halo *${customer_name}* 👋,
+  return `*BUKTI KONFIRMASI RESERVASI - GOR MBS*
 
-Tiket reservasi lapangan bulu tangkis Anda telah kami verifikasi!
+Yth. Sdr/i *${customer_name}*,
+Terima kasih telah melakukan pemesanan sewa lapangan di GOR MBS (Mandiri Bengle Sejahtera). Tiket reservasi Anda telah berhasil terverifikasi.
 
-• Kode Booking: *${booking_code}*
-• Lapangan: *${staff_name}*
-• Jumlah Pemain: *${player_count} Orang*
-• Jadwal Main: *${booking_date}* (${booking_time} WIB)
-• Total Bayar: *Rp ${formattedAmount}*
+*RINCIAN TIKET AN DARA:*
+- Kode Booking: ${booking_code}
+- Nama Pemesan: ${customer_name}
+- No. WhatsApp: ${customer_phone || '-'}
+- Lapangan: ${staff_name}
+- Tanggal Main: ${booking_date}
+- Jam Main: ${booking_time} WIB (${duration} Jam)
+- Jumlah Pemain: ${player_count} Orang
+- Total Bayar: Rp ${formattedAmount}
+- Status Tiket: Terverifikasi (Siap Bermain)
+- Token QR Check-In: ${qr_code_token || booking_code}
 
-Status: *VERIFIED & READY TO PLAY* ✅
+*PETUNJUK CHEK-IN DI LOKASI:*
+Silakan tunjukkan Kode Booking atau Token QR di atas kepada kasir saat Anda tiba di GOR MBS.
 
-Selamat bertanding dan selamat bermain! 🏸🔥`;
+- Lokasi GOR: Citra Kebun Mas Blok B, Bengle, Kec. Majalaya, Karawang, Jawa Barat 41371.
+- Jam Operasional: 08.00 - 23.00 WIB.
+
+Selamat bermain dan nikmati pertandingan Anda!`;
 };
 
 export const sendWhatsAppFonnte = async ({ target, message, apiKey }) => {
