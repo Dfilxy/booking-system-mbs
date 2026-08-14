@@ -783,36 +783,43 @@ export default function PublicBooking() {
             </p>
 
             {/* Ticket Summary Card */}
-            <div className="bg-slate-950 rounded-xl p-3 border border-slate-800 text-left space-y-2 mb-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="text-[10px] text-slate-400">Kode Booking</span>
-                <span className="font-mono font-black text-emerald-400 text-sm">{confirmedBooking.booking_code}</span>
+            <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 text-left space-y-3 mb-4 shadow-inner">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                <span className="text-[11px] text-slate-400 font-medium">Kode Booking</span>
+                <span className="font-mono font-black text-emerald-400 text-base tracking-wider">{confirmedBooking.booking_code}</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-                <div>
-                  <span className="text-slate-400 block text-[10px]">Pemain Utama</span>
-                  <span className="font-bold text-white truncate block">{confirmedBooking.customer_name}</span>
+              <div className="space-y-2 text-xs">
+                <div className="grid grid-cols-2 gap-2 pb-2 border-b border-slate-900">
+                  <div>
+                    <span className="text-slate-400 block text-[10px] font-semibold uppercase tracking-wider">Pemain Utama</span>
+                    <span className="font-extrabold text-white text-xs block truncate mt-0.5">{confirmedBooking.customer_name}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] font-semibold uppercase tracking-wider">No. WA Pemain</span>
+                    <span className="font-bold text-sky-400 font-mono text-xs block truncate mt-0.5">{confirmedBooking.customer_phone}</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px]">No. WA Pemain</span>
-                  <span className="font-bold text-white truncate block">{confirmedBooking.customer_phone}</span>
+
+                <div className="grid grid-cols-2 gap-2 pb-2 border-b border-slate-900">
+                  <div>
+                    <span className="text-slate-400 block text-[10px] font-semibold uppercase tracking-wider">Jumlah Pemain</span>
+                    <span className="font-extrabold text-emerald-400 text-xs block mt-0.5">{confirmedBooking.player_count} Orang</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] font-semibold uppercase tracking-wider">Lapangan</span>
+                    <span className="font-extrabold text-emerald-400 text-xs block mt-0.5">{confirmedBooking.staff_name || confirmedBooking.court_name}</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px]">Jumlah Pemain</span>
-                  <span className="font-bold text-emerald-400">{confirmedBooking.player_count} Orang</span>
+
+                <div className="pb-2 border-b border-slate-900">
+                  <span className="text-slate-400 block text-[10px] font-semibold uppercase tracking-wider">Jadwal Main ({confirmedBooking.duration_hours} Jam)</span>
+                  <span className="font-bold text-purple-300 text-xs block mt-0.5">{confirmedBooking.booking_date} @ {confirmedBooking.booking_time} WIB</span>
                 </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px]">Lapangan</span>
-                  <span className="font-bold text-emerald-400">{confirmedBooking.staff_name}</span>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-slate-400 block text-[10px]">Jadwal Main ({confirmedBooking.duration_hours} Jam)</span>
-                  <span className="font-bold text-white text-[10px]">{confirmedBooking.booking_date} @ {confirmedBooking.booking_time} WIB</span>
-                </div>
-                <div className="col-span-2 pt-1.5 border-t border-slate-800/60 flex justify-between items-center">
-                  <span className="text-slate-400 text-[10px]">Total Bayar:</span>
-                  <span className="font-extrabold text-emerald-400 text-sm">
+
+                <div className="pt-1 flex justify-between items-center text-sm">
+                  <span className="text-slate-300 font-bold text-xs uppercase tracking-wider">Total Bayar</span>
+                  <span className="font-black text-emerald-400 text-base font-mono">
                     Rp {Number(confirmedBooking.total_amount).toLocaleString('id-ID')}
                   </span>
                 </div>
@@ -925,46 +932,48 @@ export default function PublicBooking() {
               </button>
             </div>
 
-            <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 text-left space-y-2 font-mono text-xs">
-              <div className="flex justify-between border-b border-slate-900 pb-1.5">
-                <span className="text-slate-400">Pemain:</span>
-                <span className="font-bold text-white">{formData.name}</span>
+            <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 text-left space-y-2.5 font-sans text-xs shadow-inner">
+              <div className="flex items-center justify-between border-b border-slate-900 pb-2">
+                <span className="text-slate-400 font-medium">Pemain</span>
+                <span className="font-extrabold text-white text-xs">{formData.name}</span>
               </div>
-              <div className="flex justify-between border-b border-slate-900 pb-1.5">
-                <span className="text-slate-400">No. WhatsApp:</span>
-                <span className="font-bold text-sky-400">{formData.phone}</span>
+              <div className="flex items-center justify-between border-b border-slate-900 pb-2">
+                <span className="text-slate-400 font-medium">No. WhatsApp</span>
+                <span className="font-bold text-sky-400 font-mono text-xs">{formData.phone}</span>
               </div>
-              <div className="flex justify-between border-b border-slate-900 pb-1.5">
-                <span className="text-slate-400">Lapangan:</span>
-                <span className="font-bold text-emerald-400">{selectedCourt?.name}</span>
+              <div className="flex items-center justify-between border-b border-slate-900 pb-2">
+                <span className="text-slate-400 font-medium">Lapangan</span>
+                <span className="font-extrabold text-emerald-400 text-xs">{selectedCourt?.name}</span>
               </div>
-              <div className="flex justify-between border-b border-slate-900 pb-1.5">
-                <span className="text-slate-400">Tanggal & Jam:</span>
-                <span className="font-bold text-purple-300">{selectedDate} ({selectedStartTime} - {getEndTime(selectedStartTime, durationHours)} WIB)</span>
+              <div className="border-b border-slate-900 pb-2 space-y-0.5">
+                <span className="text-slate-400 font-medium block">Jadwal & Waktu Main</span>
+                <span className="font-bold text-purple-300 text-xs block">{selectedDate} @ {selectedStartTime} - {getEndTime(selectedStartTime, durationHours)} WIB</span>
               </div>
-              <div className="flex justify-between pt-0.5">
-                <span className="text-slate-400">Jumlah Pemain:</span>
-                <span className="font-bold text-white">{playerCount} Orang ({durationHours} Jam)</span>
+              <div className="flex items-center justify-between pb-1">
+                <span className="text-slate-400 font-medium">Jumlah Pemain</span>
+                <span className="font-extrabold text-white text-xs">{playerCount} Orang ({durationHours} Jam)</span>
               </div>
-              <div className="flex justify-between pt-1 border-t border-slate-800 text-sm">
-                <span className="text-slate-300 font-bold">Total Tarif:</span>
-                <span className="font-black text-emerald-400">Rp {calculateTotalAmount().toLocaleString('id-ID')}</span>
+              <div className="flex justify-between items-center pt-2 border-t border-slate-800 text-sm">
+                <span className="text-slate-200 font-extrabold">Total Tarif</span>
+                <span className="font-black text-emerald-400 text-base font-mono">Rp {calculateTotalAmount().toLocaleString('id-ID')}</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="grid grid-cols-2 gap-2.5 pt-1">
               <button
+                type="button"
                 onClick={() => setShowBookingConfirmModal(false)}
-                className="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition"
+                className="py-3 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold text-xs transition border border-slate-700 flex items-center justify-center space-x-1.5 whitespace-nowrap"
               >
-                ✏️ Periksa Lagi
+                <span>✏️ Periksa Lagi</span>
               </button>
               <button
+                type="button"
                 onClick={handleFinalBookingSubmit}
-                className="py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-600 hover:to-teal-500 text-white font-bold text-xs shadow-lg transition flex items-center justify-center space-x-1"
+                className="py-3 px-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-xs transition shadow-lg shadow-emerald-400/20 flex items-center justify-center space-x-1.5 whitespace-nowrap"
               >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Ya, Sewa Sekarang</span>
+                <CheckCircle2 className="w-4 h-4 text-slate-950 shrink-0" />
+                <span className="whitespace-nowrap">Ya, Sewa Sekarang</span>
               </button>
             </div>
 
