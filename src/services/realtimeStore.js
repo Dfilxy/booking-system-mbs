@@ -70,6 +70,83 @@ export const hashPassword = async (plainPassword) => {
   }
 };
 
+// FIRESTORE CLOUD REALTIME SYNC HELPERS (SAFE NO-OP IF OFF-LINE OR ERROR)
+export const syncBookingToFirestore = async (booking) => {
+  if (!db || !booking?.id) return;
+  try {
+    const docRef = doc(db, 'bookings', booking.id.toString());
+    await setDoc(docRef, booking, { merge: true });
+  } catch (err) {
+    console.warn('[Firestore Sync Booking Warning]:', err);
+  }
+};
+
+export const syncSlotToFirestore = async (slot) => {
+  if (!db || !slot?.id) return;
+  try {
+    const docRef = doc(db, 'slots', slot.id.toString());
+    await setDoc(docRef, slot, { merge: true });
+  } catch (err) {
+    console.warn('[Firestore Sync Slot Warning]:', err);
+  }
+};
+
+export const syncSlotsBatchToFirestore = async (slots = []) => {
+  if (!db || !slots || slots.length === 0) return;
+  try {
+    const batch = writeBatch(db);
+    slots.forEach(s => {
+      if (s?.id) {
+        const docRef = doc(db, 'slots', s.id.toString());
+        batch.set(docRef, s, { merge: true });
+      }
+    });
+    await batch.commit();
+  } catch (err) {
+    console.warn('[Firestore Sync Slots Batch Warning]:', err);
+  }
+};
+
+export const deleteBookingFromFirestore = async (bookingId) => {
+  if (!db || !bookingId) return;
+  try {
+    const docRef = doc(db, 'bookings', bookingId.toString());
+    await deleteDoc(docRef);
+  } catch (err) {
+    console.warn('[Firestore Delete Booking Warning]:', err);
+  }
+};
+
+export const syncUserToFirestore = async (user) => {
+  if (!db || !user?.id) return;
+  try {
+    const docRef = doc(db, 'users', user.id.toString());
+    await setDoc(docRef, user, { merge: true });
+  } catch (err) {
+    console.warn('[Firestore Sync User Warning]:', err);
+  }
+};
+
+export const deleteUserFromFirestore = async (userId) => {
+  if (!db || !userId) return;
+  try {
+    const docRef = doc(db, 'users', userId.toString());
+    await deleteDoc(docRef);
+  } catch (err) {
+    console.warn('[Firestore Delete User Warning]:', err);
+  }
+};
+
+export const syncSettingsToFirestore = async (settings) => {
+  if (!db || !settings) return;
+  try {
+    const docRef = doc(db, 'settings', 'config');
+    await setDoc(docRef, settings, { merge: true });
+  } catch (err) {
+    console.warn('[Firestore Sync Settings Warning]:', err);
+  }
+};
+
 // 3 LAPANGAN (LAPANGAN A, LAPANGAN B, LAPANGAN C)
 const DEFAULT_COURTS = [
   { id: 'court-a', name: 'Lapangan A', price_per_person: 5000, avatar: '🏸', is_active: true },
@@ -260,80 +337,6 @@ const generateDefaultBadmintonSlots = () => {
   });
 
   return slots;
-};
-
-// FIREBASE FIRESTORE SYNC HELPERS
-const syncBookingToFirestore = async (booking) => {
-  try {
-    if (booking && booking.id) {
-      await setDoc(doc(db, 'bookings', booking.id), booking);
-    }
-  } catch (err) {
-    console.error('Error syncing booking to Firestore:', err);
-  }
-};
-
-const syncSlotToFirestore = async (slot) => {
-  try {
-    if (slot && slot.id) {
-      await setDoc(doc(db, 'slots', slot.id), slot);
-    }
-  } catch (err) {
-    console.error('Error syncing slot to Firestore:', err);
-  }
-};
-
-const syncSlotsBatchToFirestore = async (slotsArray) => {
-  try {
-    if (!slotsArray || slotsArray.length === 0) return;
-    const batch = writeBatch(db);
-    slotsArray.forEach(slot => {
-      if (slot && slot.id) {
-        batch.set(doc(db, 'slots', slot.id), slot, { merge: true });
-      }
-    });
-    await batch.commit();
-  } catch (err) {
-    console.error('Error batch syncing slots to Firestore:', err);
-  }
-};
-
-const deleteBookingFromFirestore = async (bookingId) => {
-  try {
-    if (bookingId) {
-      await deleteDoc(doc(db, 'bookings', bookingId));
-    }
-  } catch (err) {
-    console.error('Error deleting booking from Firestore:', err);
-  }
-};
-
-const syncUserToFirestore = async (user) => {
-  try {
-    if (user && user.id) {
-      await setDoc(doc(db, 'users', user.id), user);
-    }
-  } catch (err) {
-    console.error('Error syncing user to Firestore:', err);
-  }
-};
-
-const deleteUserFromFirestore = async (userId) => {
-  try {
-    if (userId) {
-      await deleteDoc(doc(db, 'users', userId));
-    }
-  } catch (err) {
-    console.error('Error deleting user from Firestore:', err);
-  }
-};
-
-const syncSettingsToFirestore = async (settings) => {
-  try {
-    await setDoc(doc(db, 'settings', 'admin_config'), settings);
-  } catch (err) {
-    console.error('Error syncing settings to Firestore:', err);
-  }
 };
 
 export const cleanupOrphanSlots = () => {
