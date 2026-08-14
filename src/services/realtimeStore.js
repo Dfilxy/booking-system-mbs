@@ -584,7 +584,13 @@ export const authenticateAnyAccount = async ({ usernameOrPhone, password }) => {
   if (user) {
     localStorage.setItem(STORAGE_KEY_ACTIVE_USER, JSON.stringify(user));
     updateLastActivity();
-    return { success: true, role: user.role || 'user', user };
+    if (user.role === 'admin') {
+      localStorage.setItem(STORAGE_KEY_ADMIN_AUTH, 'true');
+      sessionStorage.setItem('rts_admin_authenticated', 'true');
+      localStorage.setItem('rts_admin_authenticated_v14', 'true');
+      return { success: true, role: 'admin', user };
+    }
+    return { success: true, role: 'user', user };
   }
 
   return {
