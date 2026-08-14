@@ -10,7 +10,6 @@ import {
   Sun,
   Moon,
   User,
-  ChevronDown,
   Phone,
   Edit,
   AlertCircle
@@ -82,7 +81,6 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
     setEditError('');
     setEditSuccess('');
 
-    if (!currentUser) return;
     if (!editForm.name.trim() || !editForm.phone.trim()) {
       setEditError('Mohon isi Nama Lengkap dan Nomor WhatsApp Anda.');
       return;
@@ -90,6 +88,17 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
 
     setIsSavingProfile(true);
     try {
+      if (isRouteAdmin) {
+        // Admin update display info
+        setEditSuccess('✅ Profil Admin berhasil diperbarui!');
+        setTimeout(() => {
+          setShowEditProfileModal(false);
+          setEditSuccess('');
+        }, 1200);
+        return;
+      }
+
+      if (!currentUser) return;
       const res = await updateUserProfile(currentUser.id, {
         name: editForm.name,
         phone: editForm.phone
@@ -115,7 +124,7 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
   return (
     <>
       {isRouteAdmin ? (
-        <header className="sticky top-0 z-40 backdrop-blur-md bg-slate-900/95 border-b border-purple-900/50 text-white shadow-2xl w-full max-w-full overflow-x-hidden">
+        <header className="sticky top-0 z-40 backdrop-blur-md bg-slate-900/95 border-b border-purple-900/50 text-white shadow-2xl w-full">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16 sm:h-20">
               
@@ -137,14 +146,14 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                 </div>
               </div>
 
-              {/* Admin Header Actions (Theme Toggle & Profile Menu) */}
+              {/* Admin Header Actions (Theme Toggle & Sleek Default Profile Button) */}
               <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
                 {/* Theme Toggle Button */}
                 {toggleTheme && (
                   <button
                     onClick={toggleTheme}
                     title={theme === 'dark' ? 'Beralih ke Mode Terang (Light Theme)' : 'Beralih ke Mode Gelap (Dark Theme)'}
-                    className="flex items-center space-x-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs font-bold transition shadow-sm cursor-pointer whitespace-nowrap shrink-0"
+                    className="flex items-center space-x-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs font-bold transition shadow-sm cursor-pointer whitespace-nowrap shrink-0"
                   >
                     {theme === 'dark' ? (
                       <>
@@ -160,42 +169,56 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                   </button>
                 )}
 
-                {/* Circular Profile Avatar Header Button (Matching Screenshot 3) */}
+                {/* Default Circular Profile Icon Button (Admin) */}
                 <div className="relative shrink-0" id="profile-menu-container">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowProfileMenu(!showProfileMenu);
                     }}
-                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-sm sm:text-base flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition cursor-pointer border-2 border-teal-400/40 shrink-0"
-                    title="Menu Profil Admin MBS"
+                    className="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition cursor-pointer shrink-0"
+                    title="Menu Profil & Akun Admin"
                   >
-                    A
+                    <User className="w-5 h-5" />
                   </button>
 
                   {/* Profile Dropdown Menu */}
                   {showProfileMenu && (
                     <div 
-                      className="absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-3 z-50 animate-fade-in space-y-2"
+                      className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-3 z-50 animate-fade-in space-y-2.5 text-left"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center space-x-3">
-                        <div className="w-9 h-9 rounded-full bg-teal-600 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-md">
-                          A
+                      <div className="p-3 rounded-xl bg-slate-950/90 border border-slate-800 flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+                          <User className="w-5 h-5" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h4 className="font-black text-xs text-white truncate">Admin Kasir MBS</h4>
-                          <p className="text-[10px] text-teal-400 font-mono truncate">Super Admin</p>
+                          <h4 className="font-extrabold text-xs text-white truncate">Admin Kasir MBS</h4>
+                          <p className="text-[11px] text-amber-400 font-mono truncate">Super Admin GOR</p>
                         </div>
                       </div>
 
-                      <div className="pt-1">
+                      <div className="space-y-1 pt-1 border-t border-slate-800">
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            setEditError('');
+                            setEditSuccess('');
+                            setEditForm({ name: 'Admin Kasir MBS', phone: '08123456789' });
+                            setShowEditProfileModal(true);
+                          }}
+                          className="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:text-white hover:bg-slate-800 transition text-left cursor-pointer"
+                        >
+                          <Edit className="w-4 h-4 text-amber-400 shrink-0" />
+                          <span>✏️ Edit Profil Admin</span>
+                        </button>
+
                         <button
                           onClick={() => {
                             setShowProfileMenu(false);
                             triggerLogoutConfirm();
                           }}
-                          className="w-full flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-950/40 hover:text-rose-200 transition text-left cursor-pointer"
+                          className="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-950/40 hover:text-rose-200 transition text-left cursor-pointer"
                         >
                           <LogOut className="w-4 h-4 text-rose-400 shrink-0" />
                           <span>Keluar (Logout Admin)</span>
@@ -211,7 +234,7 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
           </div>
         </header>
       ) : (
-        <header className="sticky top-0 z-40 backdrop-blur-md bg-slate-900/90 border-b border-slate-800 text-white shadow-xl w-full max-w-full overflow-x-hidden">
+        <header className="sticky top-0 z-40 backdrop-blur-md bg-slate-900/90 border-b border-slate-800 text-white shadow-xl w-full">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16 sm:h-20">
               
@@ -260,7 +283,7 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                 </button>
               </nav>
 
-              {/* Clock, Theme Toggle & Profile Button Header Corner */}
+              {/* Clock, Theme Toggle & Sleek Default Profile Button */}
               <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
                 <div className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs text-slate-300">
                   <Clock className="w-3.5 h-3.5 text-orange-400" />
@@ -288,40 +311,40 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                   </button>
                 )}
 
-                {/* Header Corner Circular Teal Profile Button (Matching Screenshot 3) */}
+                {/* Default Circular Profile Icon Button (User) */}
                 <div className="relative shrink-0" id="profile-menu-container">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowProfileMenu(!showProfileMenu);
                     }}
-                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-sm sm:text-base flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition cursor-pointer border-2 border-teal-400/40 shrink-0"
+                    className="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition cursor-pointer shrink-0"
                     title={`Profil (${currentUser?.name || 'Pemain'})`}
                   >
-                    {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
+                    <User className="w-5 h-5" />
                   </button>
 
                   {/* Profile Dropdown Menu */}
                   {showProfileMenu && (
                     <div 
-                      className="absolute right-0 mt-2 w-64 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-3 z-50 animate-fade-in space-y-2"
+                      className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-3 z-50 animate-fade-in space-y-2.5 text-left"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-teal-600 text-white font-black flex items-center justify-center text-base shrink-0 shadow-md">
-                          {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
+                      <div className="p-3 rounded-xl bg-slate-950/90 border border-slate-800 flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+                          <User className="w-5 h-5" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h4 className="font-black text-xs text-white truncate">
+                          <h4 className="font-extrabold text-xs text-white truncate">
                             {currentUser?.name || 'Pemain MBS'}
                           </h4>
-                          <p className="text-[11px] text-teal-400 font-mono truncate">
+                          <p className="text-[11px] text-amber-400 font-mono truncate">
                             {currentUser?.phone || '-'}
                           </p>
                         </div>
                       </div>
 
-                      <div className="space-y-1 pt-1">
+                      <div className="space-y-1 pt-1 border-t border-slate-800">
                         <button
                           onClick={() => {
                             setShowProfileMenu(false);
@@ -330,7 +353,7 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                             setEditForm({ name: currentUser?.name || '', phone: currentUser?.phone || '' });
                             setShowEditProfileModal(true);
                           }}
-                          className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-200 hover:text-white hover:bg-slate-800 transition text-left cursor-pointer"
+                          className="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:text-white hover:bg-slate-800 transition text-left cursor-pointer"
                         >
                           <Edit className="w-4 h-4 text-amber-400 shrink-0" />
                           <span>✏️ Edit Profil (Ubah WA & Nama)</span>
@@ -341,7 +364,7 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                             setShowProfileMenu(false);
                             triggerLogoutConfirm();
                           }}
-                          className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-950/40 hover:text-rose-200 transition text-left cursor-pointer"
+                          className="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-950/40 hover:text-rose-200 transition text-left cursor-pointer"
                         >
                           <LogOut className="w-4 h-4 text-rose-400 shrink-0" />
                           <span>Keluar (Logout Akun)</span>
@@ -382,7 +405,7 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
       )}
 
       {/* MODAL EDIT PROFIL (NAMA & NOMOR WA) */}
-      {showEditProfileModal && currentUser && (
+      {showEditProfileModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-5 my-auto">
             
@@ -392,7 +415,7 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                   <User className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-white text-base">Edit Profil Pemain</h3>
+                  <h3 className="font-extrabold text-white text-base">Edit Profil {isRouteAdmin ? 'Admin' : 'Pemain'}</h3>
                   <p className="text-[11px] text-slate-400">Perbarui Nama Lengkap & Nomor WhatsApp</p>
                 </div>
               </div>
@@ -421,7 +444,7 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Nama Lengkap Pemain
+                  Nama Lengkap
                 </label>
                 <input
                   type="text"
@@ -449,7 +472,7 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                   />
                 </div>
                 <p className="text-[10px] text-amber-400/90 mt-1">
-                  💡 Jika nomor WhatsApp sebelumnya salah diisi saat pendaftaran, ubah di sini agar tiket booking terhubung secara sah.
+                  💡 Ubah nomor WhatsApp jika sebelumnya salah memasukkan nomor agar tiket & konfirmasi booking terhubung dengan benar.
                 </p>
               </div>
 
