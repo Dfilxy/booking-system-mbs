@@ -300,8 +300,8 @@ export default function RoleSelectorLanding({ onAuthenticated, theme, toggleThem
         </div>
 
         {/* Footer Note */}
-        <p className="text-center text-slate-500 text-xs mt-6">
-          © 2026 SmashArena GOR Realtime Booking System.
+        <p className="text-center text-slate-400 text-xs mt-6 font-medium">
+          © 2026 GOR MBS (Mandiri Bengle Sejahtera). All Rights Reserved.
         </p>
 
       </div>
