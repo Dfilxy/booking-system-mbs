@@ -763,7 +763,7 @@ export default function AdminDashboard() {
       title: '🏸 Check-In Pemain GOR',
       message: `Konfirmasi kedatangan pemain di lokasi GOR untuk mengubah status menjadi SEDANG BERMAIN.`,
       confirmVariant: 'emerald',
-      confirmText: '✓ Ya, Check-In Sekarang',
+      confirmText: 'Ya, Check-In',
       details: [
         { label: 'Nama Pemain', value: playerName },
         { label: 'Kode Booking', value: bookingCode },
@@ -799,10 +799,10 @@ export default function AdminDashboard() {
     const courtTag = Array.from(new Set(targetSessions.map(s => s.court_name || s.staff_name))).join(', ');
     
     triggerConfirm({
-      title: '🏸 Check-In Sesi Member Hari Ini',
+      title: '🏸 Check-In Sesi Member',
       message: `Konfirmasi kedatangan member untuk sesi hari ini. Status akan diubah menjadi SEDANG BERMAIN.`,
       confirmVariant: 'emerald',
-      confirmText: '✓ Ya, Check-In Member',
+      confirmText: 'Ya, Check-In',
       details: [
         { label: 'Nama Member', value: groupItem.customer_name },
         { label: 'Tanggal Main', value: dateTag },
@@ -2753,21 +2753,21 @@ export default function AdminDashboard() {
             </div>
 
             {confirmDialog.details && (
-              <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 text-left text-xs space-y-1.5 font-medium">
+              <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-left text-xs space-y-2 font-medium shadow-inner">
                 {confirmDialog.details.map((d, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-slate-300">
-                    <span className="text-slate-400 text-[11px]">{d.label}:</span>
-                    <span className="font-bold text-white text-[12px]">{d.value}</span>
+                  <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-slate-300 border-b border-slate-900 last:border-0 pb-1.5 last:pb-0">
+                    <span className="text-slate-400 text-[11px] font-semibold shrink-0 whitespace-nowrap">{d.label}:</span>
+                    <span className="font-extrabold text-white text-[12px] sm:text-right break-words">{d.value}</span>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="grid grid-cols-2 gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-                className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-2xl text-xs transition border border-slate-700"
+                className="py-3 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold rounded-2xl text-xs transition border border-slate-700 text-center whitespace-nowrap"
               >
                 Batal
               </button>
@@ -2775,15 +2775,15 @@ export default function AdminDashboard() {
               <button
                 type="button"
                 onClick={confirmDialog.onConfirm}
-                className={`py-3 px-4 font-black rounded-2xl text-xs transition shadow-lg ${
+                className={`py-3 px-3 font-black rounded-2xl text-xs transition shadow-lg text-center whitespace-nowrap flex items-center justify-center ${
                   confirmDialog.confirmVariant === 'rose'
                     ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30'
                     : confirmDialog.confirmVariant === 'emerald'
-                    ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/30'
+                    ? 'bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-emerald-400/30'
                     : 'bg-orange-500 hover:bg-orange-400 text-white shadow-orange-500/30'
                 }`}
               >
-                {confirmDialog.confirmText}
+                <span>{confirmDialog.confirmText}</span>
               </button>
             </div>
 
