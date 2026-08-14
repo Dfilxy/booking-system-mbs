@@ -86,7 +86,7 @@
 }
 
 /* ==========================================================================
-   LIGHT THEME OVERRIDES (High-Contrast Buttons, Fonts & Layout Preservation)
+   LIGHT THEME OVERRIDES (Bespoke Theme for Light Mode)
    ========================================================================== */
 html.light-theme, 
 html.light-theme body {
@@ -99,8 +99,20 @@ html.light-theme .bg-\[\#060813\] {
   background-color: #f8fafc !important;
 }
 
+/* Fix Hero Banners with hardcoded dark gradients in Light Mode */
+html.light-theme div[class*="from-slate-900"],
+html.light-theme div[class*="from-slate-950"],
+html.light-theme .bg-gradient-to-r,
+html.light-theme .bg-gradient-to-br,
+html.light-theme .bg-gradient-to-b {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
 html.light-theme .bg-slate-950 {
   background-color: #ffffff !important;
+  color: #0f172a !important;
 }
 html.light-theme .bg-slate-950\/90,
 html.light-theme .bg-slate-950\/80,
@@ -108,10 +120,12 @@ html.light-theme .bg-slate-950\/70,
 html.light-theme .bg-slate-950\/60,
 html.light-theme .bg-slate-950\/40 {
   background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #0f172a !important;
 }
 
 html.light-theme .bg-slate-900 {
   background-color: #ffffff !important;
+  color: #0f172a !important;
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04) !important;
 }
 html.light-theme .bg-slate-900\/95,
@@ -120,13 +134,11 @@ html.light-theme .bg-slate-900\/80,
 html.light-theme .bg-slate-900\/60,
 html.light-theme .bg-slate-900\/40 {
   background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #0f172a !important;
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.06) !important;
 }
 
-html.light-theme .bg-slate-850 {
-  background-color: #f1f5f9 !important;
-}
-
+html.light-theme .bg-slate-850,
 html.light-theme .bg-slate-800 {
   background-color: #f1f5f9 !important;
   color: #0f172a !important;
@@ -153,13 +165,15 @@ html.light-theme button.bg-slate-900:hover {
   background-color: #cbd5e1 !important;
 }
 
-/* Ensure Colored Buttons keep crisp white text! */
+/* Ensure Colored Buttons & Circular Profile Icons keep crisp white text! */
 html.light-theme .bg-purple-600,
 html.light-theme .bg-emerald-500,
 html.light-theme .bg-emerald-600,
 html.light-theme .bg-orange-500,
 html.light-theme .bg-rose-600,
-html.light-theme .bg-rose-500 {
+html.light-theme .bg-rose-500,
+html.light-theme .bg-teal-500,
+html.light-theme .bg-teal-600 {
   color: #ffffff !important;
 }
 
@@ -168,8 +182,59 @@ html.light-theme .bg-emerald-500 *,
 html.light-theme .bg-emerald-600 *,
 html.light-theme .bg-orange-500 *,
 html.light-theme .bg-rose-600 *,
-html.light-theme .bg-rose-500 * {
-  color: inherit !important;
+html.light-theme .bg-rose-500 *,
+html.light-theme .bg-teal-500 *,
+html.light-theme .bg-teal-600 * {
+  color: #ffffff !important;
+}
+
+/* Light Theme Badges & Pill Containers High-Contrast */
+html.light-theme .bg-emerald-950\/40,
+html.light-theme .bg-emerald-500\/10,
+html.light-theme .bg-emerald-500\/15,
+html.light-theme .bg-emerald-500\/20 {
+  background-color: #dcfce7 !important;
+  color: #15803d !important;
+  border-color: #86efac !important;
+}
+html.light-theme .bg-emerald-950\/40 *,
+html.light-theme .bg-emerald-500\/10 * {
+  color: #15803d !important;
+}
+
+html.light-theme .bg-purple-950\/40,
+html.light-theme .bg-purple-500\/10,
+html.light-theme .bg-purple-500\/15,
+html.light-theme .bg-purple-500\/20 {
+  background-color: #f3e8ff !important;
+  color: #6b21a8 !important;
+  border-color: #d8b4fe !important;
+}
+html.light-theme .bg-purple-950\/40 *,
+html.light-theme .bg-purple-500\/20 * {
+  color: #6b21a8 !important;
+}
+
+html.light-theme .bg-amber-500\/10,
+html.light-theme .bg-amber-500\/15,
+html.light-theme .bg-amber-500\/20 {
+  background-color: #fef3c7 !important;
+  color: #b45309 !important;
+  border-color: #fde68a !important;
+}
+html.light-theme .bg-amber-500\/20 * {
+  color: #b45309 !important;
+}
+
+html.light-theme .bg-rose-500\/10,
+html.light-theme .bg-rose-500\/15,
+html.light-theme .bg-rose-500\/20 {
+  background-color: #ffe4e6 !important;
+  color: #be123c !important;
+  border-color: #fecdd3 !important;
+}
+html.light-theme .bg-rose-500\/20 * {
+  color: #be123c !important;
 }
 
 /* Light Theme Borders */
@@ -256,7 +321,9 @@ html.light-theme .fixed.inset-0.bg-slate-950\/90 {
 
 /* Header & Footer in Light Theme */
 html.light-theme header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
   border-bottom-color: #cbd5e1 !important;
+  color: #0f172a !important;
 }
 html.light-theme footer {
   background-color: #ffffff !important;

@@ -160,23 +160,17 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                   </button>
                 )}
 
-                {/* Profile Header Button */}
+                {/* Circular Profile Avatar Header Button (Matching Screenshot 3) */}
                 <div className="relative shrink-0" id="profile-menu-container">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowProfileMenu(!showProfileMenu);
                     }}
-                    className="flex items-center space-x-2 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-xs font-bold transition shadow-sm cursor-pointer shrink-0"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-sm sm:text-base flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition cursor-pointer border-2 border-teal-400/40 shrink-0"
+                    title="Menu Profil Admin MBS"
                   >
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-xs sm:text-sm shadow-inner shrink-0">
-                      A
-                    </div>
-                    <div className="hidden sm:flex flex-col text-left leading-tight">
-                      <span className="font-extrabold text-xs text-amber-300 max-w-[100px] truncate">Admin MBS</span>
-                      <span className="text-[9px] text-amber-400/80 font-mono">Super Admin</span>
-                    </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    A
                   </button>
 
                   {/* Profile Dropdown Menu */}
@@ -186,12 +180,12 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center space-x-3">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-sm shrink-0 shadow-md">
+                        <div className="w-9 h-9 rounded-full bg-teal-600 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-md">
                           A
                         </div>
                         <div className="min-w-0 flex-1">
                           <h4 className="font-black text-xs text-white truncate">Admin Kasir MBS</h4>
-                          <p className="text-[10px] text-amber-400 font-mono truncate">Administrator</p>
+                          <p className="text-[10px] text-teal-400 font-mono truncate">Super Admin</p>
                         </div>
                       </div>
 
@@ -294,27 +288,17 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                   </button>
                 )}
 
-                {/* Header Corner Profile Button */}
+                {/* Header Corner Circular Teal Profile Button (Matching Screenshot 3) */}
                 <div className="relative shrink-0" id="profile-menu-container">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowProfileMenu(!showProfileMenu);
                     }}
-                    className="flex items-center space-x-2 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-2xl bg-slate-800/80 hover:bg-slate-700 text-slate-100 border border-slate-700/80 text-xs font-bold transition shadow-md cursor-pointer shrink-0"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-sm sm:text-base flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition cursor-pointer border-2 border-teal-400/40 shrink-0"
+                    title={`Profil (${currentUser?.name || 'Pemain'})`}
                   >
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 font-black flex items-center justify-center text-xs sm:text-sm shadow-inner shrink-0">
-                      {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
-                    </div>
-                    <div className="hidden md:flex flex-col text-left leading-tight">
-                      <span className="font-extrabold text-xs text-white max-w-[100px] truncate">
-                        {currentUser?.name || 'Pemain MBS'}
-                      </span>
-                      <span className="text-[9px] text-amber-400 font-mono">
-                        {currentUser?.phone ? currentUser.phone : 'Pemain'}
-                      </span>
-                    </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
                   </button>
 
                   {/* Profile Dropdown Menu */}
@@ -324,14 +308,14 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 font-black flex items-center justify-center text-base shrink-0 shadow-md">
+                        <div className="w-10 h-10 rounded-full bg-teal-600 text-white font-black flex items-center justify-center text-base shrink-0 shadow-md">
                           {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
                         </div>
                         <div className="min-w-0 flex-1">
                           <h4 className="font-black text-xs text-white truncate">
                             {currentUser?.name || 'Pemain MBS'}
                           </h4>
-                          <p className="text-[11px] text-slate-400 font-mono truncate">
+                          <p className="text-[11px] text-teal-400 font-mono truncate">
                             {currentUser?.phone || '-'}
                           </p>
                         </div>
