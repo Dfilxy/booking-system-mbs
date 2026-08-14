@@ -4,6 +4,8 @@ import Navbar from './components/Navbar';
 import PublicBooking from './components/PublicBooking';
 import BookingManage from './components/BookingManage';
 import AdminDashboard from './components/AdminDashboard';
+import Footer from './components/Footer';
+import FloatingContactWidget from './components/FloatingContactWidget';
 import {
   initRealtimeDatabase,
   getCurrentSession,
@@ -36,35 +38,38 @@ export default function App() {
     }
   }, [theme]);
 
-  // Session State - Cek Akses Per-Tab saat init
+  // Sesi multi-tab dan pemulihan otomatis dari LocalStorage
   const [currentRole, setCurrentRole] = useState(() => {
+    // 1. Cek sesi role khusus tab ini dulu
+    const tabRole = sessionStorage.getItem('rts_tab_role');
+    if (tabRole === 'admin' || tabRole === 'user') {
+      const activeUser = getActiveUser();
+      if (activeUser && activeUser.role === tabRole) {
+        return tabRole;
+      }
+    }
+
+    // 2. Cek URL Hash (#admin, #booking, #manage)
     const hash = window.location.hash.replace('#', '');
-    const tabSessionRole = sessionStorage.getItem('rts_tab_role');
-    const isAdminAuth = sessionStorage.getItem('rts_admin_authenticated') === 'true' || localStorage.getItem('rts_admin_authenticated_v14') === 'true';
-    const activeUser = getActiveUser();
-
-    if (isSessionExpired()) {
-      return null;
+    if (hash === 'admin') {
+      const isAdminAuth = sessionStorage.getItem('rts_admin_authenticated') === 'true' ||
+                          localStorage.getItem('rts_admin_authenticated_v14') === 'true';
+      if (isAdminAuth) {
+        sessionStorage.setItem('rts_tab_role', 'admin');
+        return 'admin';
+      }
     }
 
-    // 1. Tab Admin
-    if (isAdminAuth && (hash === 'admin' || tabSessionRole === 'admin' || (hash !== 'booking' && hash !== 'manage'))) {
-      sessionStorage.setItem('rts_tab_role', 'admin');
-      sessionStorage.setItem('rts_admin_authenticated', 'true');
-      return 'admin';
-    }
-
-    // 2. Tab User / Pemain
-    if (activeUser && (['booking', 'manage'].includes(hash) || tabSessionRole === 'user')) {
-      sessionStorage.setItem('rts_tab_role', 'user');
-      return 'user';
-    }
-
+    // 3. Cek Active User global
     const session = getCurrentSession();
-    return session ? session.role : null;
+    if (session?.role) {
+      sessionStorage.setItem('rts_tab_role', session.role);
+      return session.role;
+    }
+
+    return null;
   });
 
-  // Tab Customer State (Persist saat Refresh!)
   const [customerTab, setCustomerTabState] = useState(() => {
     const hash = window.location.hash.replace('#', '');
     if (['booking', 'manage'].includes(hash)) {
@@ -73,29 +78,19 @@ export default function App() {
     return localStorage.getItem('rts_customer_active_tab') || 'booking';
   });
 
-  const setCustomerTab = (tab) => {
-    setCustomerTabState(tab);
-    localStorage.setItem('rts_customer_active_tab', tab);
-    if (currentRole === 'user') {
-      window.location.hash = tab;
-    }
+  const setCustomerTab = (tabName) => {
+    setCustomerTabState(tabName);
+    localStorage.setItem('rts_customer_active_tab', tabName);
+    window.location.hash = tabName;
   };
 
   useEffect(() => {
+    // Inisialisasi awal database lokal
     initRealtimeDatabase();
 
-    // Pengecekan kadaluwarsa 1 jam saat pertama kali muat
-    if (isSessionExpired()) {
-      handleLogout();
-      setSessionExpiredNotice(true);
-      return;
-    }
-
+    // Pastikan hash URL selaras dengan state aplikasi
     if (currentRole) {
-      updateLastActivity();
-      sessionStorage.setItem('rts_tab_role', currentRole);
       if (currentRole === 'admin') {
-        sessionStorage.setItem('rts_admin_authenticated', 'true');
         if (window.location.hash !== '#admin') {
           window.location.hash = 'admin';
         }
@@ -209,7 +204,7 @@ export default function App() {
         />
 
         {/* Dedicated Main Content View */}
-        <main className="relative z-10 pb-16 w-full max-w-full overflow-x-hidden">
+        <main className="relative z-10 pb-8 w-full max-w-full overflow-x-hidden">
           {isRouteAdmin ? (
             <AdminDashboard />
           ) : (
@@ -221,12 +216,19 @@ export default function App() {
         </main>
       </div>
 
-      {/* Clean Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-900/60 py-6 text-center text-xs text-slate-400 w-full overflow-x-hidden mt-auto">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>© 2026 GOR MBS (Mandiri Bengle Sejahtera). Realtime Booking & Session Persistence System.</p>
-        </div>
-      </footer>
+      {/* Floating WhatsApp & Instagram Quick Contact Widget */}
+      <FloatingContactWidget />
+
+      {/* Bespoke Comprehensive Web Footer */}
+      {!isRouteAdmin ? (
+        <Footer setActiveTab={setCustomerTab} />
+      ) : (
+        <footer className="border-t border-slate-800/80 bg-slate-900/60 py-6 text-center text-xs text-slate-400 w-full overflow-x-hidden mt-auto">
+          <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p>© {new Date().getFullYear()} GOR MBS (Mandiri Bengle Sejahtera). Dashboard Pengelolaan Kasir & Admin.</p>
+          </div>
+        </footer>
+      )}
 
     </div>
   );
