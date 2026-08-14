@@ -101,6 +101,18 @@ export default function PublicBooking() {
   const [adminWaMsg, setAdminWaMsg] = useState('');
   const [adminWaUrl, setAdminWaUrl] = useState('');
 
+  // Lock body scroll when modal is open to prevent header/footer overlap bug
+  useEffect(() => {
+    if (showBookingConfirmModal || confirmedBooking || showWASimulator) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showBookingConfirmModal, confirmedBooking, showWASimulator]);
+
   const [allBookings, setAllBookings] = useState([]);
 
   const reloadData = () => {
@@ -759,7 +771,7 @@ export default function PublicBooking() {
 
       {/* CONFIRMATION E-TICKET MODAL CARD */}
       {confirmedBooking && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in overflow-y-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in overflow-y-auto">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-4 sm:p-5 text-center shadow-2xl relative my-auto">
             
             <button
@@ -911,7 +923,7 @@ export default function PublicBooking() {
 
       {/* MODAL KONFIRMASI PEMESANAN LAPANGAN UNTUK USER */}
       {showBookingConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in overflow-y-auto">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-5 text-center shadow-2xl relative my-auto space-y-4">
             
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">

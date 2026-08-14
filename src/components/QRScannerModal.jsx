@@ -159,7 +159,7 @@ export default function QRScannerModal({ onClose, onSuccessCheckIn }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in overflow-y-auto">
       
       {/* CSS Khusus Memastikan Kamera 1 Layar Penuh (Tidak Terbelah Dua) */}
       <style>{`
