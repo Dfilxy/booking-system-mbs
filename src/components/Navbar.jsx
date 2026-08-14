@@ -1,15 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Smartphone, Clock, Trophy, ShieldCheck, LogOut, AlertTriangle, X, Check, Sun, Moon } from 'lucide-react';
+import {
+  Calendar,
+  Smartphone,
+  Clock,
+  LogOut,
+  AlertTriangle,
+  X,
+  Check,
+  Sun,
+  Moon,
+  User,
+  ChevronDown,
+  Phone,
+  Edit,
+  AlertCircle
+} from 'lucide-react';
+import {
+  getActiveUser,
+  updateUserProfile,
+  subscribeRealtimeUpdates
+} from '../services/realtimeStore';
 
 export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetRole, theme, toggleTheme }) {
   const [time, setTime] = useState(new Date().toLocaleTimeString('id-ID'));
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  // Profile Dropdown & Edit Modal States
+  const [currentUser, setCurrentUser] = useState(() => getActiveUser());
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', phone: '' });
+  const [editError, setEditError] = useState('');
+  const [editSuccess, setEditSuccess] = useState('');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setTime(new Date().toLocaleTimeString('id-ID'));
     }, 1000);
-    return () => clearInterval(timer);
+
+    const active = getActiveUser();
+    setCurrentUser(active);
+    if (active) {
+      setEditForm({ name: active.name || '', phone: active.phone || '' });
+    }
+
+    const unsubscribe = subscribeRealtimeUpdates(() => {
+      const updated = getActiveUser();
+      setCurrentUser(updated);
+      if (updated) {
+        setEditForm({ name: updated.name || '', phone: updated.phone || '' });
+      }
+    });
+
+    // Close profile menu when clicking outside
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('#profile-menu-container')) {
+        setShowProfileMenu(false);
+      }
+    };
+    window.addEventListener('click', handleClickOutside);
+
+    return () => {
+      clearInterval(timer);
+      unsubscribe();
+      window.removeEventListener('click', handleClickOutside);
+    };
   }, []);
 
   const triggerLogoutConfirm = () => {
@@ -19,6 +75,41 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
   const handleExecuteLogout = () => {
     setShowLogoutModal(false);
     onResetRole();
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setEditError('');
+    setEditSuccess('');
+
+    if (!currentUser) return;
+    if (!editForm.name.trim() || !editForm.phone.trim()) {
+      setEditError('Mohon isi Nama Lengkap dan Nomor WhatsApp Anda.');
+      return;
+    }
+
+    setIsSavingProfile(true);
+    try {
+      const res = await updateUserProfile(currentUser.id, {
+        name: editForm.name,
+        phone: editForm.phone
+      });
+
+      if (res.success) {
+        setCurrentUser(res.user);
+        setEditSuccess('✅ Profil & Nomor WhatsApp berhasil diperbarui!');
+        setTimeout(() => {
+          setShowEditProfileModal(false);
+          setEditSuccess('');
+        }, 1200);
+      } else {
+        setEditError(res.error || 'Gagal memperbarui profil.');
+      }
+    } catch (err) {
+      setEditError('Terjadi kesalahan koneksi.');
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   return (
@@ -46,7 +137,7 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                 </div>
               </div>
 
-              {/* Admin Header Actions */}
+              {/* Admin Header Actions (Theme Toggle & Profile Menu) */}
               <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
                 {/* Theme Toggle Button */}
                 {toggleTheme && (
@@ -69,14 +160,57 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                   </button>
                 )}
 
-                <button
-                  onClick={triggerLogoutConfirm}
-                  className="flex items-center space-x-1 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-500/30 text-xs sm:text-sm font-bold transition shadow-sm whitespace-nowrap shrink-0"
-                >
-                  <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400 shrink-0" />
-                  <span className="hidden sm:inline">Logout Admin (Keluar)</span>
-                  <span className="sm:hidden text-[11px]">Logout</span>
-                </button>
+                {/* Profile Header Button */}
+                <div className="relative shrink-0" id="profile-menu-container">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowProfileMenu(!showProfileMenu);
+                    }}
+                    className="flex items-center space-x-2 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-xs font-bold transition shadow-sm cursor-pointer shrink-0"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-xs sm:text-sm shadow-inner shrink-0">
+                      A
+                    </div>
+                    <div className="hidden sm:flex flex-col text-left leading-tight">
+                      <span className="font-extrabold text-xs text-amber-300 max-w-[100px] truncate">Admin MBS</span>
+                      <span className="text-[9px] text-amber-400/80 font-mono">Super Admin</span>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  </button>
+
+                  {/* Profile Dropdown Menu */}
+                  {showProfileMenu && (
+                    <div 
+                      className="absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-3 z-50 animate-fade-in space-y-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center space-x-3">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-sm shrink-0 shadow-md">
+                          A
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-black text-xs text-white truncate">Admin Kasir MBS</h4>
+                          <p className="text-[10px] text-amber-400 font-mono truncate">Administrator</p>
+                        </div>
+                      </div>
+
+                      <div className="pt-1">
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            triggerLogoutConfirm();
+                          }}
+                          className="w-full flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-950/40 hover:text-rose-200 transition text-left cursor-pointer"
+                        >
+                          <LogOut className="w-4 h-4 text-rose-400 shrink-0" />
+                          <span>Keluar (Logout Admin)</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
               </div>
 
             </div>
@@ -132,7 +266,7 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                 </button>
               </nav>
 
-              {/* Clock & Explicit Logout Button */}
+              {/* Clock, Theme Toggle & Profile Button Header Corner */}
               <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
                 <div className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs text-slate-300">
                   <Clock className="w-3.5 h-3.5 text-orange-400" />
@@ -160,14 +294,79 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                   </button>
                 )}
 
-                <button
-                  onClick={triggerLogoutConfirm}
-                  className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-500/30 text-xs font-bold transition shadow-sm ml-1 sm:ml-2 whitespace-nowrap shrink-0"
-                >
-                  <LogOut className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                  <span className="hidden sm:inline">Logout (Keluar)</span>
-                  <span className="sm:hidden text-[11px]">Logout</span>
-                </button>
+                {/* Header Corner Profile Button */}
+                <div className="relative shrink-0" id="profile-menu-container">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowProfileMenu(!showProfileMenu);
+                    }}
+                    className="flex items-center space-x-2 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-2xl bg-slate-800/80 hover:bg-slate-700 text-slate-100 border border-slate-700/80 text-xs font-bold transition shadow-md cursor-pointer shrink-0"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 font-black flex items-center justify-center text-xs sm:text-sm shadow-inner shrink-0">
+                      {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
+                    </div>
+                    <div className="hidden md:flex flex-col text-left leading-tight">
+                      <span className="font-extrabold text-xs text-white max-w-[100px] truncate">
+                        {currentUser?.name || 'Pemain MBS'}
+                      </span>
+                      <span className="text-[9px] text-amber-400 font-mono">
+                        {currentUser?.phone ? currentUser.phone : 'Pemain'}
+                      </span>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  </button>
+
+                  {/* Profile Dropdown Menu */}
+                  {showProfileMenu && (
+                    <div 
+                      className="absolute right-0 mt-2 w-64 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-3 z-50 animate-fade-in space-y-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 font-black flex items-center justify-center text-base shrink-0 shadow-md">
+                          {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-black text-xs text-white truncate">
+                            {currentUser?.name || 'Pemain MBS'}
+                          </h4>
+                          <p className="text-[11px] text-slate-400 font-mono truncate">
+                            {currentUser?.phone || '-'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 pt-1">
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            setEditError('');
+                            setEditSuccess('');
+                            setEditForm({ name: currentUser?.name || '', phone: currentUser?.phone || '' });
+                            setShowEditProfileModal(true);
+                          }}
+                          className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-200 hover:text-white hover:bg-slate-800 transition text-left cursor-pointer"
+                        >
+                          <Edit className="w-4 h-4 text-amber-400 shrink-0" />
+                          <span>✏️ Edit Profil (Ubah WA & Nama)</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            triggerLogoutConfirm();
+                          }}
+                          className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-950/40 hover:text-rose-200 transition text-left cursor-pointer"
+                        >
+                          <LogOut className="w-4 h-4 text-rose-400 shrink-0" />
+                          <span>Keluar (Logout Akun)</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
               </div>
 
             </div>
@@ -196,6 +395,101 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
             </button>
           </div>
         </header>
+      )}
+
+      {/* MODAL EDIT PROFIL (NAMA & NOMOR WA) */}
+      {showEditProfileModal && currentUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-5 my-auto">
+            
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+                  <User className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-white text-base">Edit Profil Pemain</h3>
+                  <p className="text-[11px] text-slate-400">Perbarui Nama Lengkap & Nomor WhatsApp</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowEditProfileModal(false)}
+                className="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Alert Error / Success */}
+            {editError && (
+              <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center space-x-2 animate-fade-in">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{editError}</span>
+              </div>
+            )}
+            {editSuccess && (
+              <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center space-x-2 animate-fade-in">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{editSuccess}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Nama Lengkap Pemain
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:border-amber-500"
+                  placeholder="Masukkan Nama Lengkap"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Nomor WhatsApp Aktif (Format 08... atau 628...)
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input
+                    type="tel"
+                    required
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:border-amber-500"
+                    placeholder="Contoh: 081234567890"
+                  />
+                </div>
+                <p className="text-[10px] text-amber-400/90 mt-1">
+                  💡 Jika nomor WhatsApp sebelumnya salah diisi saat pendaftaran, ubah di sini agar tiket booking terhubung secara sah.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditProfileModal(false)}
+                  className="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition shadow-lg shadow-amber-500/20 flex items-center justify-center space-x-1 disabled:opacity-50"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{isSavingProfile ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
       )}
 
       {/* MODAL KONFIRMASI LOGOUT */}

@@ -609,6 +609,51 @@ export const updateUserAdmin = async (userId, { name, phone, password, role }) =
   return { success: false, error: 'Akun user tidak ditemukan.' };
 };
 
+export const updateUserProfile = async (userId, { name, phone }) => {
+  const phoneValidation = validateIndonesianPhone(phone);
+  if (!phoneValidation.isValid) {
+    return { success: false, error: phoneValidation.error };
+  }
+
+  const cleanPhone = phoneValidation.cleanPhone;
+  const users = getRegisteredUsers();
+  const idx = users.findIndex(u => u.id === userId);
+
+  const conflict = users.find(u => u.id !== userId && u.phone === cleanPhone);
+  if (conflict) {
+    return { success: false, error: 'Nomor WhatsApp ini sudah digunakan oleh akun pemain lain!' };
+  }
+
+  if (idx !== -1) {
+    const updatedUser = {
+      ...users[idx],
+      name: name.trim(),
+      phone: cleanPhone
+    };
+
+    users[idx] = updatedUser;
+    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+
+    const activeUser = getActiveUser();
+    if (activeUser && activeUser.id === userId) {
+      localStorage.setItem(STORAGE_KEY_ACTIVE_USER, JSON.stringify(updatedUser));
+    }
+
+    syncUserToFirestore(updatedUser);
+    notifyAllSubscribers({ type: 'USER_PROFILE_UPDATED', user: updatedUser });
+
+    broadcastChannel.postMessage({
+      type: 'REALTIME_USER_UPDATED',
+      user: updatedUser,
+      timestamp: Date.now()
+    });
+
+    return { success: true, user: updatedUser };
+  }
+
+  return { success: false, error: 'Akun pemain tidak ditemukan.' };
+};
+
 export const deleteUserAdmin = (userId) => {
   const users = getRegisteredUsers();
   const idx = users.findIndex(u => u.id === userId);
