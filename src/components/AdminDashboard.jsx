@@ -1001,10 +1001,44 @@ export default function AdminDashboard() {
     });
   }, [filteredBookings]);
 
+  // PAGINATION SYSTEM STATE FOR BOOKINGS (Daftar Booking Pemain)
+  const [bookingPage, setBookingPage] = useState(1);
+  const [bookingPageSize, setBookingPageSize] = useState(10);
+
+  useEffect(() => {
+    setBookingPage(1);
+  }, [searchFilter, statusFilter]);
+
+  const totalBookingItems = processedBookingsList.length;
+  const totalBookingPages = Math.max(1, Math.ceil(totalBookingItems / bookingPageSize));
+  const validBookingPage = Math.min(bookingPage, totalBookingPages);
+
+  const paginatedBookingsList = React.useMemo(() => {
+    const startIdx = (validBookingPage - 1) * bookingPageSize;
+    return processedBookingsList.slice(startIdx, startIdx + bookingPageSize);
+  }, [processedBookingsList, validBookingPage, bookingPageSize]);
+
+  // USERS FILTER & PAGINATION SYSTEM (Kelola Akun Pemain)
   const filteredUsers = usersList.filter(u => 
     u.name?.toLowerCase().includes(userSearchFilter.toLowerCase()) ||
     u.phone?.includes(userSearchFilter)
   );
+
+  const [userPage, setUserPage] = useState(1);
+  const [userPageSize, setUserPageSize] = useState(10);
+
+  useEffect(() => {
+    setUserPage(1);
+  }, [userSearchFilter]);
+
+  const totalUserItems = filteredUsers.length;
+  const totalUserPages = Math.max(1, Math.ceil(totalUserItems / userPageSize));
+  const validUserPage = Math.min(userPage, totalUserPages);
+
+  const paginatedUsersList = React.useMemo(() => {
+    const startIdx = (validUserPage - 1) * userPageSize;
+    return filteredUsers.slice(startIdx, startIdx + userPageSize);
+  }, [filteredUsers, validUserPage, userPageSize]);
 
   ensureSlotsForDate(selectedSlotDate);
   const filteredSlots = slots.filter(
@@ -1259,14 +1293,14 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
-                  {processedBookingsList.length === 0 ? (
+                  {paginatedBookingsList.length === 0 ? (
                     <tr>
                       <td colSpan={isBookingSelectMode ? 7 : 6} className="p-8 text-center text-slate-500">
                         Tidak ada data reservasi yang cocok.
                       </td>
                     </tr>
                   ) : (
-                    processedBookingsList.map((item) => {
+                    paginatedBookingsList.map((item) => {
                       if (item.is_group) {
                         const isExpanded = expandedGroupIds.includes(item.group_key);
                         return (
@@ -1637,6 +1671,15 @@ export default function AdminDashboard() {
               </table>
             </div>
           </div>
+
+          <PaginationBar
+            currentPage={validBookingPage}
+            totalPages={totalBookingPages}
+            totalItems={totalBookingItems}
+            pageSize={bookingPageSize}
+            onPageChange={setBookingPage}
+            onPageSizeChange={setBookingPageSize}
+          />
         </div>
       )}
 
@@ -1711,12 +1754,12 @@ export default function AdminDashboard() {
 
           {/* Mobile Card List View (khusus HP) */}
           <div className="block sm:hidden space-y-3">
-            {filteredUsers.length === 0 ? (
+            {paginatedUsersList.length === 0 ? (
               <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl text-center text-slate-500 text-xs">
                 Belum ada akun pemain terdaftar yang cocok dengan pencarian.
               </div>
             ) : (
-              filteredUsers.map((usr) => (
+              paginatedUsersList.map((usr) => (
                 <div key={usr.id} className={`p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-3 transition shadow-lg ${selectedUserIds.includes(usr.id) ? 'bg-purple-950/30 border-purple-500/40' : ''}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2.5">
@@ -1808,14 +1851,14 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
-                  {filteredUsers.length === 0 ? (
+                  {paginatedUsersList.length === 0 ? (
                     <tr>
                       <td colSpan={isUserSelectMode ? 7 : 6} className="p-8 text-center text-slate-500">
                         Belum ada akun pemain terdaftar yang cocok dengan pencarian.
                       </td>
                     </tr>
                   ) : (
-                    filteredUsers.map((usr) => (
+                    paginatedUsersList.map((usr) => (
                       <tr key={usr.id} className={`hover:bg-slate-800/40 transition ${selectedUserIds.includes(usr.id) ? 'bg-purple-950/30' : ''}`}>
                         {isUserSelectMode && (
                           <td className="p-4 text-center">
@@ -1879,6 +1922,15 @@ export default function AdminDashboard() {
               </table>
             </div>
           </div>
+
+          <PaginationBar
+            currentPage={validUserPage}
+            totalPages={totalUserPages}
+            totalItems={totalUserItems}
+            pageSize={userPageSize}
+            onPageChange={setUserPage}
+            onPageSizeChange={setUserPageSize}
+          />
         </div>
       )}
 
@@ -2867,6 +2919,116 @@ export default function AdminDashboard() {
         </div>
       )}
 
+    </div>
+  );
+}
+
+// REUSABLE PAGINATION BAR COMPONENT UNTUK ADMIN DASHBOARD
+function PaginationBar({ currentPage, totalPages, totalItems, pageSize, onPageChange, onPageSizeChange }) {
+  if (totalItems === 0) return null;
+
+  const startItem = Math.min((currentPage - 1) * pageSize + 1, totalItems);
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push('...');
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) {
+        if (i > 1 && i < totalPages) pages.push(i);
+      }
+      if (currentPage < totalPages - 2) pages.push('...');
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 p-4 rounded-3xl text-xs text-slate-400 font-medium shadow-xl mt-4">
+      <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+        <span>
+          Menampilkan <strong className="text-white font-extrabold">{startItem}</strong> - <strong className="text-white font-extrabold">{endItem}</strong> dari <strong className="text-purple-400 font-black">{totalItems}</strong> data
+        </span>
+        <div className="flex items-center space-x-2">
+          <span className="text-[11px] text-slate-400 font-semibold">Tampilkan:</span>
+          <select
+            value={pageSize}
+            onChange={(e) => {
+              onPageSizeChange(Number(e.target.value));
+              onPageChange(1);
+            }}
+            className="bg-slate-950 border border-slate-700 text-white rounded-xl px-2.5 py-1 outline-none text-xs font-bold focus:border-purple-500 cursor-pointer"
+          >
+            <option value={10}>10 Baris</option>
+            <option value={20}>20 Baris</option>
+            <option value={50}>50 Baris</option>
+            <option value={100}>100 Baris</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-1.5 overflow-x-auto max-w-full pb-1 sm:pb-0 shrink-0">
+        <button
+          disabled={currentPage === 1}
+          onClick={() => onPageChange(1)}
+          className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 font-extrabold transition text-xs border border-slate-700"
+          title="Halaman Pertama (1)"
+        >
+          «
+        </button>
+
+        <button
+          disabled={currentPage === 1}
+          onClick={() => onPageChange(currentPage - 1)}
+          className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 font-extrabold transition text-xs border border-slate-700"
+          title="Halaman Sebelumnya"
+        >
+          ‹ Prev
+        </button>
+
+        {getPageNumbers().map((p, idx) => (
+          <React.Fragment key={idx}>
+            {p === '...' ? (
+              <span className="px-2 py-1 text-slate-500 font-bold">...</span>
+            ) : (
+              <button
+                onClick={() => onPageChange(p)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition border ${
+                  currentPage === p
+                    ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-600/30 scale-[1.05]'
+                    : 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300'
+                }`}
+              >
+                {p}
+              </button>
+            )}
+          </React.Fragment>
+        ))}
+
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => onPageChange(currentPage + 1)}
+          className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 font-extrabold transition text-xs border border-slate-700"
+          title="Halaman Selanjutnya"
+        >
+          Next ›
+        </button>
+
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => onPageChange(totalPages)}
+          className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 font-extrabold transition text-xs border border-slate-700"
+          title={`Halaman Terakhir (${totalPages})`}
+        >
+          »
+        </button>
+      </div>
     </div>
   );
 }
