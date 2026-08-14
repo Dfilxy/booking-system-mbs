@@ -1709,13 +1709,87 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+          {/* Mobile Card List View (khusus HP) */}
+          <div className="block sm:hidden space-y-3">
+            {filteredUsers.length === 0 ? (
+              <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl text-center text-slate-500 text-xs">
+                Belum ada akun pemain terdaftar yang cocok dengan pencarian.
+              </div>
+            ) : (
+              filteredUsers.map((usr) => (
+                <div key={usr.id} className={`p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-3 transition shadow-lg ${selectedUserIds.includes(usr.id) ? 'bg-purple-950/30 border-purple-500/40' : ''}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2.5">
+                      {isUserSelectMode && (
+                        <input
+                          type="checkbox"
+                          checked={selectedUserIds.includes(usr.id)}
+                          onChange={() => toggleSelectUser(usr.id)}
+                          className="w-4 h-4 accent-rose-500 rounded cursor-pointer shrink-0"
+                        />
+                      )}
+                      <div className="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30 font-bold shrink-0">
+                        <UserCheck className="w-4.5 h-4.5" />
+                      </div>
+                      <div>
+                        <span className="font-extrabold text-white text-sm block tracking-tight">{usr.name}</span>
+                        <span className="text-[10px] text-slate-400 block font-medium">Daftar: {usr.created_at ? new Date(usr.created_at).toLocaleDateString('id-ID') : '-'}</span>
+                      </div>
+                    </div>
+                    {usr.role === 'admin' ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap">
+                        Admin
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
+                        User
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400 text-[11px] font-medium">No. WA / User:</span>
+                      <span className="font-bold text-emerald-400 font-mono text-xs">{usr.phone}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-1.5 border-t border-slate-900">
+                      <span className="text-slate-400 text-[11px] font-medium">Password:</span>
+                      <span className="text-[11px] text-purple-300 font-semibold flex items-center space-x-1">
+                        <KeyRound className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                        <span>SHA-256 (Terenkripsi)</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end space-x-2 pt-1 border-t border-slate-800/60">
+                    <button
+                      onClick={() => handleOpenEditUser(usr)}
+                      className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-bold border border-slate-700 transition flex items-center space-x-1.5"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(usr.id, usr.name)}
+                      className="px-3.5 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-xs font-bold border border-rose-500/30 transition flex items-center space-x-1.5"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus</span>
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table View (khusus Desktop / Tablet) */}
+          <div className="hidden sm:block bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm text-slate-300">
                 <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] sm:text-xs font-bold border-b border-slate-800">
                   <tr>
                     {isUserSelectMode && (
-                      <th className="p-4 w-10 text-center">
+                      <th className="p-4 w-10 text-center whitespace-nowrap">
                         <input
                           type="checkbox"
                           title="Pilih Semua Akun"
@@ -1725,12 +1799,12 @@ export default function AdminDashboard() {
                         />
                       </th>
                     )}
-                    <th className="p-4">Nama Lengkap Pemain</th>
-                    <th className="p-4">No. WhatsApp / Username</th>
-                    <th className="p-4">Password</th>
-                    <th className="p-4">Role Akses</th>
-                    <th className="p-4">Tanggal Daftar</th>
-                    <th className="p-4 text-center">Aksi (CRUD)</th>
+                    <th className="p-4 whitespace-nowrap">Nama Lengkap Pemain</th>
+                    <th className="p-4 whitespace-nowrap">No. WhatsApp / Username</th>
+                    <th className="p-4 whitespace-nowrap">Password</th>
+                    <th className="p-4 whitespace-nowrap">Role Akses</th>
+                    <th className="p-4 whitespace-nowrap">Tanggal Daftar</th>
+                    <th className="p-4 text-center whitespace-nowrap">Aksi (CRUD)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -1753,18 +1827,20 @@ export default function AdminDashboard() {
                             />
                           </td>
                         )}
-                        <td className="p-4 font-bold text-white flex items-center space-x-2">
-                          <UserCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <span>{usr.name}</span>
+                        <td className="p-4 font-bold text-white whitespace-nowrap">
+                          <div className="flex items-center space-x-2">
+                            <UserCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span>{usr.name}</span>
+                          </div>
                         </td>
-                        <td className="p-4 font-mono text-emerald-400 font-semibold">{usr.phone}</td>
-                        <td className="p-4 font-mono text-slate-400">
+                        <td className="p-4 font-mono text-emerald-400 font-semibold whitespace-nowrap">{usr.phone}</td>
+                        <td className="p-4 font-mono text-slate-400 whitespace-nowrap">
                           <span className="flex items-center space-x-1" title="Disimpan secara aman dengan Hash SHA-256">
-                            <KeyRound className="w-3.5 h-3.5 text-purple-400" />
+                            <KeyRound className="w-3.5 h-3.5 text-purple-400 shrink-0" />
                             <span className="text-[11px] text-purple-300 font-semibold">🔒 SHA-256 (Terenkripsi)</span>
                           </span>
                         </td>
-                        <td className="p-4">
+                        <td className="p-4 whitespace-nowrap">
                           {usr.role === 'admin' ? (
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap">
                               Admin
@@ -1775,10 +1851,10 @@ export default function AdminDashboard() {
                             </span>
                           )}
                         </td>
-                        <td className="p-4 text-[11px] text-slate-400">
+                        <td className="p-4 text-[11px] text-slate-400 whitespace-nowrap">
                           {usr.created_at ? new Date(usr.created_at).toLocaleDateString('id-ID') : '-'}
                         </td>
-                        <td className="p-4 text-center">
+                        <td className="p-4 text-center whitespace-nowrap">
                           <div className="flex items-center justify-center space-x-2">
                             <button
                               onClick={() => handleOpenEditUser(usr)}
