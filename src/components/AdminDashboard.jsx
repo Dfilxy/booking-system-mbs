@@ -2923,7 +2923,7 @@ export default function AdminDashboard() {
   );
 }
 
-// REUSABLE PAGINATION BAR COMPONENT UNTUK ADMIN DASHBOARD
+// REUSABLE ULTRA-SLEEK PAGINATION BAR COMPONENT UNTUK ADMIN DASHBOARD
 function PaginationBar({ currentPage, totalPages, totalItems, pageSize, onPageChange, onPageSizeChange }) {
   if (totalItems === 0) return null;
 
@@ -2950,34 +2950,38 @@ function PaginationBar({ currentPage, totalPages, totalItems, pageSize, onPageCh
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 p-4 rounded-3xl text-xs text-slate-400 font-medium shadow-xl mt-4">
-      <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
-        <span>
-          Menampilkan <strong className="text-white font-extrabold">{startItem}</strong> - <strong className="text-white font-extrabold">{endItem}</strong> dari <strong className="text-purple-400 font-black">{totalItems}</strong> data
+    <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-900/60 border border-slate-800/80 p-3 sm:px-4 sm:py-3 rounded-2xl text-xs text-slate-400 font-medium mt-4 shadow-sm backdrop-blur-sm">
+      {/* Left: Info Text & Limit Select */}
+      <div className="flex items-center justify-between sm:justify-start gap-3 w-full md:w-auto text-[11px] sm:text-xs">
+        <span className="whitespace-nowrap">
+          Menampilkan <strong className="text-white font-black">{startItem}</strong>-
+          <strong className="text-white font-black">{endItem}</strong> dari{' '}
+          <strong className="text-purple-400 font-black">{totalItems}</strong> data
         </span>
-        <div className="flex items-center space-x-2">
-          <span className="text-[11px] text-slate-400 font-semibold">Tampilkan:</span>
+
+        <div className="flex items-center space-x-1.5 shrink-0">
           <select
             value={pageSize}
             onChange={(e) => {
               onPageSizeChange(Number(e.target.value));
               onPageChange(1);
             }}
-            className="bg-slate-950 border border-slate-700 text-white rounded-xl px-2.5 py-1 outline-none text-xs font-bold focus:border-purple-500 cursor-pointer"
+            className="bg-slate-950/90 border border-slate-700/80 text-white rounded-lg px-2 py-1 outline-none text-[11px] font-bold focus:border-purple-500 cursor-pointer"
           >
-            <option value={10}>10 Baris</option>
-            <option value={20}>20 Baris</option>
-            <option value={50}>50 Baris</option>
-            <option value={100}>100 Baris</option>
+            <option value={10}>10 / Hal</option>
+            <option value={20}>20 / Hal</option>
+            <option value={50}>50 / Hal</option>
+            <option value={100}>100 / Hal</option>
           </select>
         </div>
       </div>
 
-      <div className="flex items-center space-x-1.5 overflow-x-auto max-w-full pb-1 sm:pb-0 shrink-0">
+      {/* Right: Page Buttons */}
+      <div className="flex items-center justify-center space-x-1 w-full md:w-auto shrink-0">
         <button
           disabled={currentPage === 1}
           onClick={() => onPageChange(1)}
-          className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 font-extrabold transition text-xs border border-slate-700"
+          className="px-2 py-1.5 rounded-lg bg-slate-950/80 hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed text-slate-300 font-bold transition text-[11px] border border-slate-800"
           title="Halaman Pertama (1)"
         >
           «
@@ -2986,44 +2990,46 @@ function PaginationBar({ currentPage, totalPages, totalItems, pageSize, onPageCh
         <button
           disabled={currentPage === 1}
           onClick={() => onPageChange(currentPage - 1)}
-          className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 font-extrabold transition text-xs border border-slate-700"
+          className="px-2.5 py-1.5 rounded-lg bg-slate-950/80 hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed text-slate-300 font-bold transition text-[11px] border border-slate-800 flex items-center space-x-1"
           title="Halaman Sebelumnya"
         >
-          ‹ Prev
+          <span>‹ Prev</span>
         </button>
 
-        {getPageNumbers().map((p, idx) => (
-          <React.Fragment key={idx}>
-            {p === '...' ? (
-              <span className="px-2 py-1 text-slate-500 font-bold">...</span>
-            ) : (
-              <button
-                onClick={() => onPageChange(p)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition border ${
-                  currentPage === p
-                    ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-600/30 scale-[1.05]'
-                    : 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300'
-                }`}
-              >
-                {p}
-              </button>
-            )}
-          </React.Fragment>
-        ))}
+        <div className="flex items-center space-x-1 px-1">
+          {getPageNumbers().map((p, idx) => (
+            <React.Fragment key={idx}>
+              {p === '...' ? (
+                <span className="px-1 text-slate-600 font-bold">...</span>
+              ) : (
+                <button
+                  onClick={() => onPageChange(p)}
+                  className={`w-7 h-7 rounded-lg text-[11px] font-black transition flex items-center justify-center ${
+                    currentPage === p
+                      ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30 font-black scale-105'
+                      : 'bg-slate-950/80 hover:bg-slate-800 text-slate-300 border border-slate-800/80'
+                  }`}
+                >
+                  {p}
+                </button>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
 
         <button
           disabled={currentPage === totalPages}
           onClick={() => onPageChange(currentPage + 1)}
-          className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 font-extrabold transition text-xs border border-slate-700"
+          className="px-2.5 py-1.5 rounded-lg bg-slate-950/80 hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed text-slate-300 font-bold transition text-[11px] border border-slate-800 flex items-center space-x-1"
           title="Halaman Selanjutnya"
         >
-          Next ›
+          <span>Next ›</span>
         </button>
 
         <button
           disabled={currentPage === totalPages}
           onClick={() => onPageChange(totalPages)}
-          className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 font-extrabold transition text-xs border border-slate-700"
+          className="px-2 py-1.5 rounded-lg bg-slate-950/80 hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed text-slate-300 font-bold transition text-[11px] border border-slate-800"
           title={`Halaman Terakhir (${totalPages})`}
         >
           »
