@@ -121,6 +121,72 @@ export const isSessionExpired = () => {
   return elapsed > ONE_HOUR_MS;
 };
 
+// -------------------------------------------------------------
+// VALIDASI STRICT NOMOR WA INDONESIA & ANTI-SPAM RATE LIMITING
+// -------------------------------------------------------------
+export const validateIndonesianPhone = (phoneStr) => {
+  if (!phoneStr || !phoneStr.trim()) {
+    return { isValid: false, error: 'Nomor WhatsApp wajib diisi.' };
+  }
+
+  const clean = phoneStr.trim().replace(/[^0-9]/g, '');
+
+  if (clean.startsWith('08')) {
+    if (clean.length < 10 || clean.length > 14) {
+      return { isValid: false, error: 'Nomor WhatsApp Indonesia (08...) harus terdiri dari 10 hingga 14 digit.' };
+    }
+  } else if (clean.startsWith('628')) {
+    if (clean.length < 11 || clean.length > 15) {
+      return { isValid: false, error: 'Nomor WhatsApp Indonesia (+628...) harus terdiri dari 11 hingga 15 digit.' };
+    }
+  } else {
+    return { isValid: false, error: 'Format Nomor WhatsApp tidak valid. Nomor Indonesia harus diawali 08... atau 628...' };
+  }
+
+  const validPrefixes = [
+    '0811', '0812', '0813', '0814', '0815', '0816', '0817', '0818', '0819',
+    '0821', '0822', '0823', '0831', '0832', '0833', '0838',
+    '0851', '0852', '0853', '0855', '0856', '0857', '0858', '0859',
+    '0877', '0878', '0881', '0882', '0883', '0884', '0885', '0886', '0887', '0888', '0889',
+    '0895', '0896', '0897', '0898', '0899',
+    '6281', '6282', '6283', '6285', '6287', '6288', '6289'
+  ];
+
+  const isValidPrefix = validPrefixes.some(p => clean.startsWith(p));
+  if (!isValidPrefix) {
+    return {
+      isValid: false,
+      error: 'Nomor WhatsApp yang Anda masukkan tidak terdeteksi sebagai nomor provider seluler Indonesia yang aktif (Telkomsel, Indosat, XL, Tri, Smartfren, Axis).'
+    };
+  }
+
+  return { isValid: true, cleanPhone: clean };
+};
+
+const LAST_BOOKING_TIMESTAMP_KEY = 'rts_last_booking_submission_ts';
+const BOOKING_COOLDOWN_MS = 30000; // 30 Detik Cooldown Anti-Spam
+
+export const checkBookingRateLimit = () => {
+  const lastTs = localStorage.getItem(LAST_BOOKING_TIMESTAMP_KEY);
+  if (!lastTs) return { isAllowed: true };
+
+  const elapsed = Date.now() - parseInt(lastTs, 10);
+  if (elapsed < BOOKING_COOLDOWN_MS) {
+    const remainingSec = Math.ceil((BOOKING_COOLDOWN_MS - elapsed) / 1000);
+    return {
+      isAllowed: false,
+      remainingSec,
+      error: `⚠️ Proteksi Anti-Spam Aktif: Mohon tunggu ${remainingSec} detik lagi sebelum membuat reservasi berikutnya.`
+    };
+  }
+
+  return { isAllowed: true };
+};
+
+export const updateBookingRateLimit = () => {
+  localStorage.setItem(LAST_BOOKING_TIMESTAMP_KEY, Date.now().toString());
+};
+
 export const getCurrentSession = () => {
   if (isSessionExpired()) {
     logoutActiveUser();
@@ -443,8 +509,13 @@ export const getActiveUser = () => {
 };
 
 export const registerNewUser = async ({ name, phone, password }) => {
+  const phoneValidation = validateIndonesianPhone(phone);
+  if (!phoneValidation.isValid) {
+    return { success: false, error: phoneValidation.error };
+  }
+
+  const cleanPhone = phoneValidation.cleanPhone;
   const users = getRegisteredUsers();
-  const cleanPhone = phone.trim().replace(/[^0-9]/g, '');
 
   const exists = users.find(u => u.phone === cleanPhone || u.phone === phone.trim());
   if (exists) {

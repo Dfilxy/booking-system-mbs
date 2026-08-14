@@ -9,7 +9,10 @@ import {
   subscribeRealtimeUpdates,
   initRealtimeDatabase,
   getActiveUser,
-  getSettings
+  getSettings,
+  validateIndonesianPhone,
+  checkBookingRateLimit,
+  updateBookingRateLimit
 } from '../services/realtimeStore';
 import { dispatchAdminWhatsAppNotification } from '../services/whatsappService';
 import WhatsAppSimulator from './WhatsAppSimulator';
@@ -179,12 +182,26 @@ export default function PublicBooking() {
     e.preventDefault();
     setErrorMessage('');
 
+    // 1. Check Anti-Spam Rate Limit (30 detik cooldown)
+    const rateCheck = checkBookingRateLimit();
+    if (!rateCheck.isAllowed) {
+      setErrorMessage(rateCheck.error);
+      return;
+    }
+
     if (!selectedStartTime) {
       setErrorMessage('Silakan pilih jam mulai main pada grid ketersediaan.');
       return;
     }
     if (!formData.name.trim() || !formData.phone.trim()) {
       setErrorMessage('Mohon lengkapi Nama Pemain dan Nomor WhatsApp Anda.');
+      return;
+    }
+
+    // 2. Check Strict Indonesian WA Number Format
+    const phoneVal = validateIndonesianPhone(formData.phone);
+    if (!phoneVal.isValid) {
+      setErrorMessage(phoneVal.error);
       return;
     }
 
@@ -237,6 +254,9 @@ export default function PublicBooking() {
         setSlots(getSlots(selectedDate));
         return;
       }
+
+      // Update Anti-Spam Rate Limit Timestamp
+      updateBookingRateLimit();
 
       const newBkg = res.booking;
       setConfirmedBooking(newBkg);
