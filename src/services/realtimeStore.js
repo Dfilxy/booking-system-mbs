@@ -108,7 +108,13 @@ export const updateLastActivity = () => {
 
 export const isSessionExpired = () => {
   const lastActivity = localStorage.getItem(STORAGE_KEY_LAST_ACTIVITY);
-  if (!lastActivity) return false;
+  const hasActiveUser = localStorage.getItem(STORAGE_KEY_ACTIVE_USER);
+  const hasAdminAuth = localStorage.getItem(STORAGE_KEY_ADMIN_AUTH) === 'true' || 
+                       localStorage.getItem('rts_admin_authenticated_v14') === 'true' || 
+                       sessionStorage.getItem('rts_admin_authenticated') === 'true';
+
+  // Jika tidak ada user atau admin yang sedang login, sesi dianggap tidak kadaluwarsa
+  if ((!hasActiveUser && !hasAdminAuth) || !lastActivity) return false;
 
   const now = Date.now();
   const elapsed = now - parseInt(lastActivity, 10);

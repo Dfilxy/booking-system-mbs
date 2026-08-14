@@ -18,7 +18,10 @@ import {
 
 export default function RoleSelectorLanding({ onAuthenticated }) {
   // Auth Tab Mode: 'register' or 'login'
-  const [authMode, setAuthMode] = useState('register');
+  const [authMode, setAuthMode] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    return (hash === 'login' || hash === 'signin') ? 'login' : 'register';
+  });
 
   // Register Form Fields
   const [registerForm, setRegisterForm] = useState({

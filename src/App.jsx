@@ -13,29 +13,21 @@ import {
 } from './services/realtimeStore';
 
 export default function App() {
-  // State Notifikasi Sesi Kadaluwarsa
-  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(() => {
-    return isSessionExpired();
-  });
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
 
-  // Session State - Cek Kadaluwarsa Inaktivitas 1 Jam & Akses Per-Tab
+  // Session State - Cek Akses Per-Tab saat init
   const [currentRole, setCurrentRole] = useState(() => {
-    if (isSessionExpired()) {
-      logoutActiveUser();
-      sessionStorage.removeItem('rts_tab_role');
-      sessionStorage.removeItem('rts_admin_authenticated');
-      localStorage.removeItem('rts_admin_authenticated_v14');
-      localStorage.removeItem('rts_current_role');
-      return null;
-    }
-
     const hash = window.location.hash.replace('#', '');
     const tabSessionRole = sessionStorage.getItem('rts_tab_role');
     const isAdminAuth = sessionStorage.getItem('rts_admin_authenticated') === 'true' || localStorage.getItem('rts_admin_authenticated_v14') === 'true';
     const activeUser = getActiveUser();
 
+    if (isSessionExpired()) {
+      return null;
+    }
+
     // 1. Tab Admin
-    if (isAdminAuth && (hash === 'admin' || tabSessionRole === 'admin')) {
+    if (isAdminAuth && (hash === 'admin' || tabSessionRole === 'admin' || (hash !== 'booking' && hash !== 'manage'))) {
       sessionStorage.setItem('rts_tab_role', 'admin');
       sessionStorage.setItem('rts_admin_authenticated', 'true');
       return 'admin';
@@ -71,7 +63,15 @@ export default function App() {
   useEffect(() => {
     initRealtimeDatabase();
 
+    // Pengecekan kadaluwarsa 1 jam saat pertama kali muat
+    if (isSessionExpired()) {
+      handleLogout();
+      setSessionExpiredNotice(true);
+      return;
+    }
+
     if (currentRole) {
+      updateLastActivity();
       sessionStorage.setItem('rts_tab_role', currentRole);
       if (currentRole === 'admin') {
         sessionStorage.setItem('rts_admin_authenticated', 'true');
@@ -100,9 +100,7 @@ export default function App() {
 
     // Event listener aktivitas pengguna untuk memperbarui last_activity_timestamp
     const handleUserActivity = () => {
-      const activeUser = getActiveUser();
-      const isAdminAuth = localStorage.getItem('rts_admin_authenticated_v14') === 'true' || sessionStorage.getItem('rts_admin_authenticated') === 'true';
-      if (activeUser || isAdminAuth) {
+      if (currentRole) {
         updateLastActivity();
       }
     };
@@ -113,16 +111,13 @@ export default function App() {
     window.addEventListener('scroll', handleUserActivity);
     window.addEventListener('touchstart', handleUserActivity);
 
-    // Timer pengecekan periodik inaktivitas 1 jam (cek setiap 10 detik)
+    // Timer pengecekan periodik inaktivitas 1 jam (cek setiap 15 detik)
     const interval = setInterval(() => {
-      const activeUser = getActiveUser();
-      const isAdminAuth = localStorage.getItem('rts_admin_authenticated_v14') === 'true' || sessionStorage.getItem('rts_admin_authenticated') === 'true';
-      
-      if ((activeUser || isAdminAuth) && isSessionExpired()) {
+      if (currentRole && isSessionExpired()) {
         handleLogout();
         setSessionExpiredNotice(true);
       }
-    }, 10000);
+    }, 15000);
 
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
@@ -151,14 +146,7 @@ export default function App() {
 
   const handleLogout = () => {
     logoutActiveUser();
-    sessionStorage.removeItem('rts_tab_role');
-    sessionStorage.removeItem('rts_admin_authenticated');
-    localStorage.removeItem('rts_admin_authenticated_v14');
-    localStorage.removeItem('rts_current_role');
-
-    // Reset URL Hash ke halaman login secara bersih
     window.location.hash = 'login';
-
     setCurrentRole(null);
   };
 
