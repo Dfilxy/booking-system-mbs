@@ -147,6 +147,23 @@ export const syncSettingsToFirestore = async (settings) => {
   }
 };
 
+export const getActiveUser = () => {
+  const data = localStorage.getItem(STORAGE_KEY_ACTIVE_USER);
+  return data ? JSON.parse(data) : null;
+};
+
+export const logoutActiveUser = () => {
+  localStorage.removeItem(STORAGE_KEY_ACTIVE_USER);
+  localStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
+  localStorage.removeItem(STORAGE_KEY_LAST_ACTIVITY);
+  localStorage.removeItem('rts_current_role');
+  localStorage.removeItem('rts_admin_authenticated_v14');
+  sessionStorage.removeItem('rts_admin_authenticated');
+  sessionStorage.removeItem('rts_current_role');
+  sessionStorage.removeItem('rts_tab_role');
+  sessionStorage.removeItem('admin_authenticated');
+};
+
 // 3 LAPANGAN (LAPANGAN A, LAPANGAN B, LAPANGAN C)
 const DEFAULT_COURTS = [
   { id: 'court-a', name: 'Lapangan A', price_per_person: 5000, avatar: '🏸', is_active: true },
@@ -506,11 +523,6 @@ export const getRegisteredUsers = () => {
   return JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '[]');
 };
 
-export const getActiveUser = () => {
-  const data = localStorage.getItem(STORAGE_KEY_ACTIVE_USER);
-  return data ? JSON.parse(data) : null;
-};
-
 export const registerNewUser = async ({ name, phone, password }) => {
   const phoneValidation = validateIndonesianPhone(phone);
   if (!phoneValidation.isValid) {
@@ -716,18 +728,6 @@ export const authenticateAnyAccount = async ({ usernameOrPhone, password }) => {
     success: false,
     error: 'Username / No. WA atau Password tidak ditemukan / salah. Silakan daftar akun baru di tab Daftar.'
   };
-};
-
-export const logoutActiveUser = () => {
-  localStorage.removeItem(STORAGE_KEY_ACTIVE_USER);
-  localStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
-  localStorage.removeItem(STORAGE_KEY_LAST_ACTIVITY);
-  localStorage.removeItem('rts_current_role');
-  localStorage.removeItem('rts_admin_authenticated_v14');
-  sessionStorage.removeItem('rts_admin_authenticated');
-  sessionStorage.removeItem('rts_current_role');
-  sessionStorage.removeItem('rts_tab_role');
-  sessionStorage.removeItem('admin_authenticated');
 };
 
 export const getServices = () => JSON.parse(localStorage.getItem(STORAGE_KEY_SERVICES) || '[]');

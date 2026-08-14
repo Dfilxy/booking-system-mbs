@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Scan,
   CheckCircle2,
@@ -158,8 +159,8 @@ export default function QRScannerModal({ onClose, onSuccessCheckIn }) {
     handleVerifyCode(qrInput);
   };
 
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/95 backdrop-blur-md animate-fade-in overflow-y-auto">
       
       {/* CSS Khusus Memastikan Kamera 1 Layar Penuh (Tidak Terbelah Dua) */}
       <style>{`
@@ -327,6 +328,7 @@ export default function QRScannerModal({ onClose, onSuccessCheckIn }) {
         )}
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

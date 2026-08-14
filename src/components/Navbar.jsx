@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Calendar,
   Smartphone,
@@ -417,8 +418,8 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
       )}
 
       {/* MODAL EDIT PROFIL (NAMA & NOMOR WA) */}
-      {showEditProfileModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in overflow-y-auto">
+      {showEditProfileModal && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md animate-fade-in overflow-y-auto">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-5 my-auto">
             
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -508,12 +509,13 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
             </form>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL KONFIRMASI LOGOUT */}
-      {showLogoutModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in overflow-y-auto">
+      {showLogoutModal && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md animate-fade-in overflow-y-auto">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl relative my-auto space-y-4">
             
             <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto border border-rose-500/30">
@@ -544,7 +546,8 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

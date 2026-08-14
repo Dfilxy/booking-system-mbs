@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   getCourts,
@@ -100,6 +101,7 @@ export default function PublicBooking() {
   const [showWASimulator, setShowWASimulator] = useState(false);
   const [adminWaMsg, setAdminWaMsg] = useState('');
   const [adminWaUrl, setAdminWaUrl] = useState('');
+  const [showBookingConfirmModal, setShowBookingConfirmModal] = useState(false);
 
   // Lock body scroll when modal is open to prevent header/footer overlap bug
   useEffect(() => {
@@ -187,8 +189,6 @@ export default function PublicBooking() {
     const players = parseInt(playerCount) || 1;
     return players * ratePerPerson;
   };
-
-  const [showBookingConfirmModal, setShowBookingConfirmModal] = useState(false);
 
   const handlePreSubmit = (e) => {
     e.preventDefault();
@@ -770,8 +770,8 @@ export default function PublicBooking() {
       </div>
 
       {/* CONFIRMATION E-TICKET MODAL CARD */}
-      {confirmedBooking && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in overflow-y-auto">
+      {confirmedBooking && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/95 backdrop-blur-md animate-fade-in overflow-y-auto">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-4 sm:p-5 text-center shadow-2xl relative my-auto">
             
             <button
@@ -780,24 +780,25 @@ export default function PublicBooking() {
                 setSelectedStartTime(null);
                 setFormData({ name: activeUser?.name || '', phone: activeUser?.phone || '', email: '', notes: '' });
               }}
-              className="absolute top-3 right-3 p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              className="absolute top-3 right-3 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
 
-            <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-2 border border-emerald-500/30">
-              <CheckCircle2 className="w-6 h-6 animate-bounce" />
+            {/* Header Badge */}
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-2 border border-emerald-500/30">
+              <CheckCircle2 className="w-6 h-6 animate-pulse" />
             </div>
 
-            <h3 className="text-lg font-extrabold text-white mb-0.5">RESERVASI BERHASIL! 🏸</h3>
-            <p className="text-[11px] text-slate-400 mb-3">
-              Tunjukkan QR Tiket ini saat Anda tiba di lokasi. Anda juga dapat mengirim rincian ini ke WA Admin GOR.
+            <h3 className="font-extrabold text-white text-lg">Reservasi Berhasil!</h3>
+            <p className="text-xs text-slate-400 mt-0.5 mb-3">
+              E-Tiket resmi GOR MBS Anda telah dibuat & siap digunakan.
             </p>
 
             {/* Ticket Summary Card */}
-            <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 text-left space-y-3 mb-4 shadow-inner">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-                <span className="text-[11px] text-slate-400 font-medium">Kode Booking</span>
+            <div className="bg-slate-950 rounded-xl p-3 border border-slate-800 text-left space-y-2 mb-3 shadow-inner">
+              <div className="flex items-center justify-between border-b border-slate-900 pb-2">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Kode Booking</span>
                 <span className="font-mono font-black text-emerald-400 text-base tracking-wider">{confirmedBooking.booking_code}</span>
               </div>
 
@@ -909,21 +910,23 @@ export default function PublicBooking() {
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {showWASimulator && (
+      {showWASimulator && createPortal(
         <WhatsAppSimulator
           customerMsg=""
           adminMsg={adminWaMsg}
           customerPhone={confirmedBooking?.customer_phone}
           onClose={() => setShowWASimulator(false)}
-        />
+        />,
+        document.body
       )}
 
       {/* MODAL KONFIRMASI PEMESANAN LAPANGAN UNTUK USER */}
-      {showBookingConfirmModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in overflow-y-auto">
+      {showBookingConfirmModal && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/95 backdrop-blur-md animate-fade-in overflow-y-auto">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-5 text-center shadow-2xl relative my-auto space-y-4">
             
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -990,7 +993,8 @@ export default function PublicBooking() {
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
