@@ -18,7 +18,9 @@ import {
   deleteMultipleUsersAdmin,
   bookMultiHourSlotsAtomic,
   subscribeRealtimeUpdates,
-  ensureSlotsForDate
+  ensureSlotsForDate,
+  isSessionExpired,
+  logoutActiveUser
 } from '../services/realtimeStore';
 import AnalyticsCharts from './AnalyticsCharts';
 import QRScannerModal from './QRScannerModal';
