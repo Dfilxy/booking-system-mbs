@@ -84,3 +84,135 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #f97316;
 }
+
+/* ==========================================================================
+   LIGHT THEME OVERRIDES (Preserving 100% Structural Positions & Layouts)
+   ========================================================================== */
+html.light-theme, 
+html.light-theme body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Light Theme Background Overrides */
+html.light-theme .bg-\[\#060813\] {
+  background-color: #f8fafc !important;
+}
+
+html.light-theme .bg-slate-950 {
+  background-color: #ffffff !important;
+}
+html.light-theme .bg-slate-950\/90,
+html.light-theme .bg-slate-950\/80,
+html.light-theme .bg-slate-950\/70,
+html.light-theme .bg-slate-950\/60,
+html.light-theme .bg-slate-950\/40 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+html.light-theme .bg-slate-900 {
+  background-color: #ffffff !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03) !important;
+}
+html.light-theme .bg-slate-900\/95,
+html.light-theme .bg-slate-900\/90,
+html.light-theme .bg-slate-900\/80,
+html.light-theme .bg-slate-900\/60,
+html.light-theme .bg-slate-900\/40 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light-theme .bg-slate-850 {
+  background-color: #f1f5f9 !important;
+}
+
+html.light-theme .bg-slate-800 {
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+}
+html.light-theme .bg-slate-800\/90,
+html.light-theme .bg-slate-800\/80,
+html.light-theme .bg-slate-800\/60,
+html.light-theme .bg-slate-800\/40 {
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+}
+
+/* Light Theme Borders */
+html.light-theme .border-slate-800,
+html.light-theme .border-slate-800\/80,
+html.light-theme .border-slate-800\/60,
+html.light-theme .border-slate-700,
+html.light-theme .border-slate-700\/60,
+html.light-theme .border-slate-700\/50 {
+  border-color: #cbd5e1 !important;
+}
+
+html.light-theme .border-slate-900 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Light Theme Typography */
+html.light-theme .text-white {
+  color: #0f172a !important;
+}
+html.light-theme .text-slate-100,
+html.light-theme .text-slate-200 {
+  color: #1e293b !important;
+}
+html.light-theme .text-slate-300 {
+  color: #334155 !important;
+}
+html.light-theme .text-slate-400 {
+  color: #475569 !important;
+}
+html.light-theme .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* Form Controls & Inputs */
+html.light-theme input,
+html.light-theme select,
+html.light-theme textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light-theme input::placeholder,
+html.light-theme textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Table Headers & Rows */
+html.light-theme thead.bg-slate-950 {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+}
+html.light-theme tbody tr:hover {
+  background-color: #f8fafc !important;
+}
+
+/* Modal Overlays in Light Theme */
+html.light-theme .fixed.inset-0.bg-slate-950\/80,
+html.light-theme .fixed.inset-0.bg-slate-950\/90 {
+  background-color: rgba(15, 23, 42, 0.5) !important;
+}
+
+/* Header & Footer in Light Theme */
+html.light-theme header {
+  border-bottom-color: #cbd5e1 !important;
+}
+html.light-theme footer {
+  background-color: #ffffff !important;
+  border-top-color: #e2e8f0 !important;
+}
+
+/* Custom Scrollbar for Light Theme */
+html.light-theme ::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+html.light-theme ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}

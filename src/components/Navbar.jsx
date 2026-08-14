@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Smartphone, Clock, Trophy, ShieldCheck, LogOut, AlertTriangle, X, Check } from 'lucide-react';
+import { Calendar, Smartphone, Clock, Trophy, ShieldCheck, LogOut, AlertTriangle, X, Check, Sun, Moon } from 'lucide-react';
 
-export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetRole }) {
+export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetRole, theme, toggleTheme }) {
   const [time, setTime] = useState(new Date().toLocaleTimeString('id-ID'));
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -48,6 +48,27 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
 
               {/* Admin Header Actions */}
               <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+                {/* Theme Toggle Button */}
+                {toggleTheme && (
+                  <button
+                    onClick={toggleTheme}
+                    title={theme === 'dark' ? 'Beralih ke Mode Terang (Light Theme)' : 'Beralih ke Mode Gelap (Dark Theme)'}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs font-bold transition shadow-sm cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    {theme === 'dark' ? (
+                      <>
+                        <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span className="hidden xs:inline text-slate-200">☀️ Mode Terang</span>
+                      </>
+                    ) : (
+                      <>
+                        <Moon className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                        <span className="hidden xs:inline text-slate-800">🌙 Mode Gelap</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
                 <button
                   onClick={triggerLogoutConfirm}
                   className="flex items-center space-x-1 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-500/30 text-xs sm:text-sm font-bold transition shadow-sm whitespace-nowrap shrink-0"
@@ -117,6 +138,27 @@ export default function Navbar({ isRouteAdmin, activeTab, setActiveTab, onResetR
                   <Clock className="w-3.5 h-3.5 text-orange-400" />
                   <span className="font-mono text-xs">{time}</span>
                 </div>
+
+                {/* Theme Toggle Button */}
+                {toggleTheme && (
+                  <button
+                    onClick={toggleTheme}
+                    title={theme === 'dark' ? 'Beralih ke Mode Terang (Light Theme)' : 'Beralih ke Mode Gelap (Dark Theme)'}
+                    className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs font-bold transition shadow-sm whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    {theme === 'dark' ? (
+                      <>
+                        <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span className="hidden xs:inline text-slate-200">☀️ Terang</span>
+                      </>
+                    ) : (
+                      <>
+                        <Moon className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                        <span className="hidden xs:inline text-slate-800">🌙 Gelap</span>
+                      </>
+                    )}
+                  </button>
+                )}
 
                 <button
                   onClick={triggerLogoutConfirm}

@@ -13,10 +13,12 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  Sun,
+  Moon
 } from 'lucide-react';
 
-export default function RoleSelectorLanding({ onAuthenticated }) {
+export default function RoleSelectorLanding({ onAuthenticated, theme, toggleTheme }) {
   // Auth Tab Mode: 'register' or 'login'
   const [authMode, setAuthMode] = useState(() => {
     const hash = window.location.hash.replace('#', '');
@@ -105,6 +107,27 @@ export default function RoleSelectorLanding({ onAuthenticated }) {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       
+      {/* Top Right Floating Theme Toggle */}
+      {toggleTheme && (
+        <button
+          onClick={toggleTheme}
+          className="absolute top-4 right-4 z-30 flex items-center space-x-1.5 px-3.5 py-2 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-amber-300 border border-slate-700/80 text-xs font-bold transition shadow-lg cursor-pointer whitespace-nowrap"
+          title={theme === 'dark' ? 'Beralih ke Mode Terang' : 'Beralih ke Mode Gelap'}
+        >
+          {theme === 'dark' ? (
+            <>
+              <Sun className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="text-slate-200">☀️ Mode Terang</span>
+            </>
+          ) : (
+            <>
+              <Moon className="w-4 h-4 text-purple-400 shrink-0" />
+              <span className="text-slate-800">🌙 Mode Gelap</span>
+            </>
+          )}
+        </button>
+      )}
+
       {/* Background Glows */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-600/15 rounded-full blur-[140px] pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/15 rounded-full blur-[140px] pointer-events-none"></div>

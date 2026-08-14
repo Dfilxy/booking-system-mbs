@@ -16,6 +16,26 @@ import {
 export default function App() {
   const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
 
+  // Theme State: 'dark' (default) atau 'light'
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('rts_theme') || 'dark';
+  });
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('rts_theme', nextTheme);
+  };
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.classList.add('light-theme');
+    } else {
+      root.classList.remove('light-theme');
+    }
+  }, [theme]);
+
   // Session State - Cek Akses Per-Tab saat init
   const [currentRole, setCurrentRole] = useState(() => {
     const hash = window.location.hash.replace('#', '');
@@ -163,7 +183,7 @@ export default function App() {
             <span>⏰ Sesi Anda telah berakhir karena tidak ada aktivitas selama 1 jam. Silakan login kembali.</span>
           </div>
         )}
-        <RoleSelectorLanding onAuthenticated={handleAuthenticated} />
+        <RoleSelectorLanding onAuthenticated={handleAuthenticated} theme={theme} toggleTheme={toggleTheme} />
       </div>
     );
   }
@@ -184,6 +204,8 @@ export default function App() {
           activeTab={customerTab}
           setActiveTab={setCustomerTab}
           onResetRole={handleLogout}
+          theme={theme}
+          toggleTheme={toggleTheme}
         />
 
         {/* Dedicated Main Content View */}
